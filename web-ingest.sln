@@ -18,6 +18,7 @@ ProjectSection(SolutionItems) = preProject
 	.env = .env
 	Dockerfile = Dockerfile
 	menu.sh = menu.sh
+	.github\workflows\github-actions.yml = .github\workflows\github-actions.yml
 EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebIngest.Tests", "WebIngest.Tests\WebIngest.Tests.csproj", "{F73599DC-013E-48F8-BA03-4FD1DDC1EE74}"

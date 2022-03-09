@@ -1,0 +1,30 @@
+﻿name: GitHub Build & Publish Action
+
+on:
+  push:
+    branches:
+      - main
+      - 'releases/**'
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0'
+      
+      - name: Install dependencies
+        run: dotnet restore web-ingest.sln
+      
+      - name: Build & Test
+        run: dotnet test  web-ingest.sln --test-adapter-path:. --logger:"junit;LogFilePath=..\artifacts\{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+      
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: ./**/*test-result.xml
