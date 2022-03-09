@@ -1,0 +1,27 @@
+﻿@using WebIngest.WebUI.Services.Hubs
+@inject SignalRService _signalRService
+
+<MudList Clickable="true" Dense="true">
+    <MudListSubheader>
+        <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">Activity</MudText>
+    </MudListSubheader>
+    
+    @foreach (var notif in _notifications)
+    {
+        <MudListItem>
+            @notif
+        </MudListItem>
+    }
+</MudList>
+
+@code {
+    private List<string> _notifications = new();
+    protected override void OnInitialized()
+    {
+        _signalRService.NotificationSubscriber(message =>
+        {
+            _notifications.Add(message.Notification);
+            StateHasChanged();
+        });
+    }
+}

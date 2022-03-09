@@ -1,0 +1,100 @@
+@using WebIngest.Common.Models.OriginConfiguration
+@using WebIngest.Common.Models.OriginConfiguration.Types
+
+<MudGrid>
+    @* CheckBoxes *@
+    <MudItem xs="12" md="6">
+        <MudCheckBox @bind-Checked="@_httpConfiguration.ShuffleUrls">Shuffle Urls</MudCheckBox>
+        <MudCheckBox @bind-Checked="@_httpConfiguration.ProxyRequests">Proxy Requests</MudCheckBox>
+        <MudCheckBox @bind-Checked="@_httpConfiguration.RandomUserAgents">Random Device Type</MudCheckBox>
+    </MudItem>
+
+    @* WebProxy Edit *@
+    <MudItem xs="12" md="6">
+        <MudTextField
+            T="string"
+            @bind-Value="@_httpConfiguration.ProxyAddress"
+            Label="Proxy Address"
+            ReadOnly="@NoProxy"
+            Disabled="@NoProxy"/>
+        <MudTextField
+            T="string"
+            @bind-Value="@_httpConfiguration.ProxyUsername"
+            Label="Proxy Username"
+            ReadOnly="@NoProxy"
+            Disabled="@NoProxy"/>
+        <MudTextField
+            T="string"
+            @bind-Value="@_httpConfiguration.ProxyPassword"
+            Label="Proxy Password"
+            ReadOnly="@NoProxy"
+            Disabled="@NoProxy"/>
+    </MudItem>
+
+    @* User Agent *@
+    <MudItem xs="12">
+        <MudTextField
+            T="string"
+            @bind-Value="@_httpConfiguration.SpecifiedUserAgent"
+            Label="Specified User Agent"
+            ReadOnly="@_httpConfiguration.RandomUserAgents"
+            Disabled="@_httpConfiguration.RandomUserAgents"/>
+    </MudItem>
+
+
+    <MudDivider Class="mt-6"/>
+
+
+    @* Urls List Edit *@
+    @if (_httpConfiguration.Urls.Any())
+    {
+        @for (int i = 0; i < _httpConfiguration.Urls.Count; i++)
+        {
+            // see https://stackoverflow.com/a/56426146/323447
+            var iCopy = i;
+            var url = _httpConfiguration.Urls[iCopy];
+            <MudItem xs="11">
+                <MudTextField T="string" Label="Url" Value="url" TextChanged="@(s => _httpConfiguration.Urls[iCopy] = s)"></MudTextField>
+            </MudItem>
+            <MudItem xs="1">
+                <MudFab OnClick="@(_ => RemoveUrl(url))" Color="Color.Error" Icon="@Icons.Material.Filled.Remove" Size="Size.Small" IconSize="Size.Medium" Class="ma-2 ml-auto"/>
+            </MudItem>
+        }
+    }
+
+</MudGrid>
+<div class="d-flex flex-row">
+    <MudFab OnClick="@(_ => AddUrl())" Color="Color.Secondary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" IconSize="Size.Medium" Class="ml-auto"/>
+</div>
+
+@code {
+    private HttpConfiguration _httpConfiguration;
+
+    private bool NoProxy => !_httpConfiguration.ProxyRequests;
+
+    [Parameter]
+    public HttpConfiguration HttpConfiguration
+    {
+        get => _httpConfiguration;
+        set
+        {
+            if (_httpConfiguration == value) return;
+            _httpConfiguration = value;
+            HttpConfigurationChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<HttpConfiguration> HttpConfigurationChanged { get; set; }
+
+    private void AddUrl()
+    {
+        _httpConfiguration.Urls.Add(String.Empty);
+    }
+
+    private void RemoveUrl(string item)
+    {
+        _httpConfiguration.Urls.Remove(item);
+    }
+
+}

@@ -1,0 +1,15 @@
+﻿@page "/logout"
+@page "/auth/logout"
+@using WebIngest.WebUI.Services.Auth
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.Logout();
+        NavigationManager.NavigateTo("/");
+    }
+
+}

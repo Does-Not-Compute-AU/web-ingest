@@ -1,0 +1,47 @@
+@using WebIngest.Common.Models
+
+<MudGrid>
+    <MudItem xs="12" sm="6">
+        <MudSelect T="string" Label="Prop Name" @bind-Value="@_propertyMapping.DataTypeProperty">
+            @foreach (var type in DataType.Properties.Select(y => y.PropertyName))
+            {
+                <MudSelectItem Value="@type">@type</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField T="string" Label="Mapping Expression" @bind-Value="@_propertyMapping.Selector"/>
+    </MudItem>
+    
+    <MudItem xs="12" sm="6">
+        <MudTextField T="string" Label="Regex Find" @bind-Value="@_propertyMapping.RegexTransform.FindPattern"/>
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField T="string" Label="Regex Replace" @bind-Value="@_propertyMapping.RegexTransform.ReplacePattern"/>
+    </MudItem>
+    
+</MudGrid>
+
+@code {
+    private PropertyMapping _propertyMapping;
+
+    [Parameter]
+    public PropertyMapping PropertyMapping
+    {
+        get => _propertyMapping;
+        set
+        {
+            if (_propertyMapping == value) return;
+            _propertyMapping = value;
+            _propertyMapping.RegexTransform ??= new RegexTransform();
+            
+            PropertyMappingChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<PropertyMapping> PropertyMappingChanged { get; set; }
+    
+    [Parameter]
+    public DataType DataType { get; set; }
+}

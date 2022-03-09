@@ -1,0 +1,153 @@
+@using WebIngest.WebUI.Theme
+@using WebIngest.WebUI.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using WebIngest.Common.Models.Messaging
+@using WebIngest.WebUI.Services.Hubs
+@inherits LayoutComponentBase
+@inject AuthService _authService
+@inject SignalRService _signalRService
+@inject NavigationManager _navigationManager
+@inject IJSRuntime _js
+
+<AuthorizeView>
+    <NotAuthorized><RedirectToLogin/></NotAuthorized>
+    <Authorized>
+        <MudThemeProvider Theme="_mudTheme"/>
+        <MudDialogProvider/>
+        <MudSnackbarProvider/>
+
+        <MudLayout>
+            <MudAppBar Elevation="4">
+                @* LEFT-SIDE *@
+                <MudIconButton Icon="@Icons.Material.Outlined.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleNavMenu"/>
+
+                <MudHidden Breakpoint="Breakpoint.Xs">
+                    <MudText Typo="Typo.h6" Class="ml-4">Web Ingest</MudText>
+                </MudHidden>
+
+                @* CENTRE *@
+                <MudSpacer/>
+                @if (_appBarGlobalStats != null)
+                {
+                    <MudHidden Breakpoint="Breakpoint.Xs">
+                        <StatsCounters ViewModel="_appBarGlobalStats" DisplayGlobalFailedJobs="true"/>
+                    </MudHidden>
+                }
+
+                @* RIGHT-SIDE *@
+                <MudSpacer/>
+                <MudIconButton Icon="@Icons.Outlined.Brightness6" Color="@Color.Inherit" OnClick="ToggleDarkMode"/>
+
+                @if (_unreadNotifications)
+                {
+                    <MudBadge Color="Color.Primary" Overlap="true" Dot="true">
+                        <MudIconButton Icon="@Icons.Outlined.Campaign" Color="@Color.Inherit" OnClick="ToggleNotifications"/>
+                    </MudBadge>
+                }
+                else
+                {
+                    <MudIconButton Icon="@Icons.Outlined.Campaign" Color="@Color.Inherit" OnClick="ToggleNotifications"/>
+                }
+                <MudMenu Direction="Direction.Left" OffsetX="true" Dense="true" Class="mt-1 ml-4">
+                    <ActivatorContent>
+                        <MudAvatar Image=@_currentUserAvatarUrl Square="true" Color="Color.Transparent" Style="background-color: transparent;"/>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <PersonCard Class="mt-n2" Email="@_currentUserEmail" AvatarUrl="@_currentUserAvatarUrl"/>
+                        <MudDivider Class="mb-2"/>
+                        <MudListItem Text="Logout" Icon="@Icons.Material.Outlined.Login" Href="/logout"/>
+                    </ChildContent>
+                </MudMenu>
+
+            </MudAppBar>
+
+
+            <MudDrawer @bind-Open="_openNavMenu" Elevation="25" ClipMode="DrawerClipMode.Docked">
+                <NavMenu/>
+            </MudDrawer>
+
+            <MudDrawer @bind-Open="_openNotifications" Elevation="25" ClipMode="DrawerClipMode.Docked" Anchor="Anchor.Right">
+                <Notifications/>
+            </MudDrawer>
+
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+                    @Body
+                </MudContainer>
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+
+    private bool _openNavMenu = true;
+    private bool _isDark;
+    private bool _openNotifications;
+    private bool _unreadNotifications;
+
+    private string _currentUserEmail;
+    private string _currentUserAvatarUrl;
+    
+    private MudTheme _mudTheme = new();
+    private StatisticsViewModel _appBarGlobalStats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await _authService.IsLoggedIn())
+            return;
+
+        ToggleDarkMode(); // set dark mode default
+        var authState = await _authService.GetCurrentAuthSate();
+        _currentUserEmail = authState?.User?.Identity?.Name;
+        if (!string.IsNullOrEmpty(_currentUserEmail))
+            _currentUserAvatarUrl = await GetAvatarUrl(_currentUserEmail);
+
+
+        _signalRService.NotificationSubscriber(_ =>
+        {
+            if (!_openNotifications)
+                _unreadNotifications = true;
+            StateHasChanged();
+        });
+
+        _signalRService.StatisticsSubscriber(message =>
+        {
+            _appBarGlobalStats = message;
+            StateHasChanged();
+        });
+
+        if (_appBarGlobalStats == null)
+        {
+            _signalRService.RefreshStatistics();
+        }
+    }
+
+    void ToggleNavMenu()
+    {
+        _openNavMenu = !_openNavMenu;
+    }
+    
+    void ToggleNotifications()
+    {
+        _openNotifications = !_openNotifications;
+        _unreadNotifications = false;
+    }
+
+    void ToggleDarkMode()
+    {
+        if (_isDark)
+            _mudTheme = MudThemes.GetTheme(MudThemeOptions.Light);
+        else
+            _mudTheme = MudThemes.GetTheme(MudThemeOptions.Dark);
+        
+        _isDark = !_isDark;
+    }
+    
+    private async Task<string> GetAvatarUrl(string email)
+    {
+        var md5 = await _js.InvokeAsync<string>("md5", email);
+        return $"https://www.gravatar.com/avatar/{md5}";
+    }
+
+}

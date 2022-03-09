@@ -1,0 +1,22 @@
+﻿@using WebIngest.Common.Models.OriginConfiguration.Types
+
+<HttpConfigurationEdit HttpConfiguration="@(_siteMapCrawlerConfiguration)"/>
+
+@code {
+    private SiteMapCrawlerConfiguration _siteMapCrawlerConfiguration;
+
+    [Parameter]
+    public SiteMapCrawlerConfiguration SiteMapCrawlerConfiguration
+    {
+        get => _siteMapCrawlerConfiguration;
+        set
+        {
+            if (_siteMapCrawlerConfiguration == value) return;
+            _siteMapCrawlerConfiguration = value;
+            SiteMapCrawlerConfigurationChanged.InvokeAsync(value);
+        }
+    }
+    
+    [Parameter]
+    public EventCallback<SiteMapCrawlerConfiguration> SiteMapCrawlerConfigurationChanged { get; set; }
+}

@@ -1,0 +1,32 @@
+﻿@using WebIngest.WebUI.Theme
+@using WebIngest.WebUI.Services.Auth
+@inherits LayoutComponentBase
+@inject AuthService _authService
+@inject NavigationManager _navigationManager
+
+<MudThemeProvider Theme="_currentTheme" />
+<MudSnackbarProvider />
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center" Style="height: 100vh;">
+    <div class="d-flex flex-column mud-width-full">
+        <MudPaper Elevation="25" Class="pa-8" Width="100%" MaxWidth="500px">
+            <MudIcon Icon="@Icons.Custom.Brands.MudBlazor" Size="Size.Large" Style="width:100px; height:100px;" />
+            @Body
+        </MudPaper>
+    </div>
+</MudContainer>
+
+@code {
+    private MudTheme _currentTheme = MudThemes.GetTheme();
+    
+    protected override void OnInitialized()
+    {
+        RedirectAuthenticatedUsers();
+    }
+
+    private async void RedirectAuthenticatedUsers()
+    {
+        if(await _authService.IsLoggedIn())
+            _navigationManager.NavigateTo("/home");
+    }
+}

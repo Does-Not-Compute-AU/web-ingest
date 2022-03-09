@@ -1,0 +1,182 @@
+@using WebIngest.Common.Models
+@using WebIngest.WebUI.Editors
+@using WebIngest.Common.Interfaces
+@using WebIngest.WebUI.Services
+@using WebIngest.Common.Extensions
+@using Newtonsoft.Json.Linq
+@inject ISnackbar _snackbar
+@inject EntityService _entityService
+@inject IDialogService _dialogService
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">@GetEntityTypeName()</MudText>
+<MudGrid>
+    <MudItem xs="12" sm="3">
+        <MudPaper Elevation="25" Class="pa-4" MinHeight="300px">
+            @if (_entities == null)
+            {
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            }
+            else
+            {
+                <MudList Clickable="true">
+                    @foreach (var dataType in _entities)
+                    {
+                        <MudListItem Text="@dataType.Name" OnClick="@((e) => EditEntity(dataType))"/>
+                    }
+                </MudList>
+                <div class="d-flex flex-row">
+                    <MudFab OnClick="@((e) => EditEntity(CreateNew()))" Color="Color.Secondary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" IconSize="Size.Medium" Class="ma-2 ml-auto"/>
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="9">
+        <MudPaper Elevation="25" Class="pa-4" MinHeight="300px">
+            @if (_editEntity == null)
+            {
+                <MudText Typo="Typo.h6" Align="Align.Center" Class="mt-16">Please select a @GetEntityTypeName() to edit</MudText>
+            }
+            else
+            {
+                if (EntityType == typeof(DataType))
+                {
+                    <DataTypeEdit DataType="@((DataType) _editEntity)"/>
+                }
+
+                if (EntityType == typeof(DataOrigin))
+                {
+                    <DataOriginEdit DataOrigin="@((DataOrigin) _editEntity)"/>
+                }
+
+                if (EntityType == typeof(Mapping))
+                {
+                    <MappingEdit Mapping="@((Mapping) _editEntity)"/>
+                }
+
+                <div class="d-flex flex-row">
+                    <MudFab OnClick="@SaveEntity" Color="Color.Tertiary" Icon="@Icons.Material.Filled.Save" Size="Size.Large" IconSize="Size.Medium" Class="ma-2"></MudFab>
+                    <MudFab OnClick="@ConfirmDeleteEntity" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Large" IconSize="Size.Medium" Class="ma-2"></MudFab>
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private INamedEntity[] _entities;
+    private INamedEntity _editEntity;
+
+    [Parameter]
+    public Type EntityType { get; set; }
+    
+    [Parameter]
+    public INamedEntity PresetEditEntity { get; set; }
+
+    private INamedEntity CreateNew()
+    {
+        if (EntityType == typeof(DataType))
+            return new DataType();
+
+        if (EntityType == typeof(DataOrigin))
+            return new DataOrigin();
+        
+        if (EntityType == typeof(Mapping))
+            return new Mapping();
+
+        throw new NotImplementedException();
+    }
+
+    private string GetEntityTypeName()
+    {
+        return EntityType.Name;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (PresetEditEntity != null)
+            _editEntity = PresetEditEntity;
+        await RefreshEntities();
+    }
+
+    private async Task RefreshEntities()
+    {
+        _entities = await _entityService.GetEntities(EntityType);
+        StateHasChanged();
+    }
+
+    private void EditEntity(INamedEntity entity)
+    {
+        _editEntity = entity;
+        StateHasChanged();
+    }
+
+    private async void SaveEntity()
+    {
+        var response = await _entityService.SaveEntity(_editEntity);
+        if (response.IsSuccessStatusCode)
+        {
+            _snackbar.Add($"Saved {_editEntity.Name}", Severity.Success);
+            await RefreshEntities()
+                .ContinueWith(task =>
+                {
+                    if (task.IsCompleted)
+                    {
+                        EditEntity(_entities.FirstOrDefault(x => x.Name == _editEntity.Name || x.Id == _editEntity.Id));
+                    }
+                });
+        }
+        else
+        {
+            var errors = response.GetErrorMessages();
+            if (errors.Any())
+            {
+                foreach (var error in errors)
+                {
+                    _snackbar.Add(error, Severity.Error);
+                }
+            }
+            else
+            {
+                _snackbar.Add($"Save Failed with Reason: {response.ReasonPhrase}", Severity.Error);
+            }
+        }
+    }
+
+    private async void ConfirmDeleteEntity()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Do you really want to delete this {GetEntityTypeName()}? This process cannot be undone.");
+        parameters.Add("ButtonText", "Delete");
+        parameters.Add("Color", Color.Error);
+
+        var options = new DialogOptions {CloseButton = true, MaxWidth = MaxWidth.ExtraSmall};
+        var dialog = _dialogService.Show<DeleteDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            DeleteEntity();
+        }
+    }
+
+    private async void DeleteEntity()
+    {
+        var response = await _entityService.DeleteEntity(_editEntity);
+        if (response.IsSuccessStatusCode)
+        {
+            _snackbar.Add($"Deleted {_editEntity.Name}", Severity.Success);
+            await RefreshEntities();
+            _editEntity = default;
+        }
+        else
+        {
+            _snackbar.Add($"Delete Failed with Reason: {response.ReasonPhrase}", Severity.Error);
+        }
+    }
+
+    private async Task EntityDeleted()
+    {
+        await RefreshEntities();
+        _editEntity = default;
+    }
+
+}

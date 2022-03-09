@@ -1,0 +1,35 @@
+﻿@using WebIngest.Common.Models
+
+<MudGrid>
+    <MudItem xs="12" sm="8">
+        <MudTextField T="string" Label="Prop Name" @bind-Value="@_dataTypeProperty.PropertyName"/>
+    </MudItem>
+
+    <MudItem xs="12" sm="4">
+        <MudSelect T="PropertyType" Label="Prop Type" @bind-Value="@_dataTypeProperty.PropertyType">
+            @foreach (var type in Enum.GetValues<PropertyType>())
+            {
+                <MudSelectItem Value="@type">@type</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private DataTypeProperty _dataTypeProperty;
+
+    [Parameter]
+    public DataTypeProperty DataTypeProperty
+    {
+        get => _dataTypeProperty;
+        set
+        {
+            if (_dataTypeProperty == value) return;
+            _dataTypeProperty = value;
+            DataTypePropertyChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<DataTypeProperty> DataTypePropertyChanged { get; set; }
+}

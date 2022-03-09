@@ -1,0 +1,78 @@
+﻿@using WebIngest.WebUI.Services.Hubs
+@using WebIngest.Common.Models.Messaging
+@using WebIngest.Common.Extensions
+@using System.Text
+@inject SignalRService _signalRService
+
+
+<MudTooltip Text="Data Points">
+    <MudBadge Class="ml-4" Color="Color.Primary" Overlap="true" Content="@PrintStat(ViewModel?.DataPoints)">
+        <MudIconButton Icon="@Icons.Outlined.DataUsage" Color="@Color.Inherit"/>
+    </MudBadge>
+</MudTooltip>
+
+<MudTooltip Text="Running Jobs">
+    <MudBadge Class="ml-4" Color="Color.Primary" Overlap="true" Content="@PrintStat(ViewModel?.ProcessingJobs)">
+        <MudIconButton Class="@ProcessingCss" Icon="@Icons.Outlined.Memory" Color="@Color.Inherit" Link="@GetHangfireLink(JobState.Running)"/>
+    </MudBadge>
+</MudTooltip>
+
+<MudTooltip Text="Queued Jobs">
+    <MudBadge Class="ml-4" Color="Color.Primary" Overlap="true" Content="@PrintStat(ViewModel?.QueuedJobs)">
+        <MudIconButton Icon="@Icons.Outlined.HorizontalSplit" Color="@Color.Inherit" Link="@GetHangfireLink(JobState.Enqueued)"/>
+    </MudBadge>
+</MudTooltip>
+
+@if (DisplayGlobalFailedJobs)
+{
+    <MudTooltip Text="Failed Jobs">
+        <MudBadge Class="ml-4" Color="@JobFailuresColor" Overlap="true" Content="@PrintStat(ViewModel?.FailedJobs)">
+            <MudIconButton Icon="@Icons.Outlined.BugReport" Color="@Color.Inherit" Link="@GetHangfireLink(JobState.Failed)"/>
+        </MudBadge>
+    </MudTooltip>
+}
+
+
+@code{
+
+    [Parameter]
+    public StatisticsViewModel ViewModel { get; set; }
+
+    [Parameter]
+    public bool DisplayGlobalFailedJobs { get; set; } = false;
+
+
+    private Color JobFailuresColor => ViewModel?.FailedJobs > 0 ? Color.Error : Color.Success;
+
+    private string PrintStat(long? stat)
+    {
+        return (stat ?? 0m).PrintTruncate();
+    }
+
+    private string ProcessingCss => ViewModel.ProcessingJobs > 0 ? "processing-animate" : string.Empty;
+
+    private enum JobState
+    {
+        Running,
+        Enqueued,
+        Failed
+    }
+
+    private string GetHangfireLink(JobState jobState)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append("/jobs/jobs/");
+
+        string jobStatePath = jobState switch {
+            JobState.Enqueued => "enqueued",
+            JobState.Failed => "failed",
+            JobState.Running => !String.IsNullOrEmpty(ViewModel.OriginMutex) ? "enqueued/fetched" : "processing",
+            _=> throw new Exception($"Unexpected Job State {jobState.ToString()}")
+        };
+        sb.Append(jobStatePath);
+
+        if (!String.IsNullOrEmpty(ViewModel.OriginMutex))
+            sb.Append("/"+ViewModel.OriginMutex);
+        return sb.ToString();
+    }
+}

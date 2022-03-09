@@ -1,0 +1,266 @@
+@using WebIngest.Common.Models
+@using WebIngest.Common.Extensions
+@using WebIngest.Common.FileExtensions
+@using WebIngest.WebUI.Services
+@using System.IO
+@using WebIngest.WebUI.Extensions
+@inject ISnackbar _snackbar
+@inject DataService _dataService
+@inject IDialogService _dialogService
+
+@if (_sampleRecords?.Any() == true)
+{
+    <MudGrid>
+        <MudItem>
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">Data Sample</MudText>
+        </MudItem>
+        <MudItem xs="12">
+            <MudTable Items="@_sampleRecords" Dense="true" Hover="true" Bordered="false" Striped="true" RowsPerPage="5">
+                <HeaderContent>
+                    @foreach (var property in _dataHeaders)
+                    {
+                        <MudTh>
+                            <MudTableSortLabel SortBy="new Func<IDictionary<string, object>, object>(x => x[property])">@property</MudTableSortLabel>
+                        </MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    @foreach (var property in _dataHeaders)
+                    {
+                        <MudTd DataLabel="@property">
+                            @context[property]
+                        </MudTd>
+                    }
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager/>
+                </PagerContent>
+            </MudTable>
+        </MudItem>
+    </MudGrid>
+}
+
+@if (_dataType == null)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+}
+else
+{
+    <div class="d-flex flex-row">
+        <MudText Typo="Typo.h5" Color="Color.Primary">Info</MudText>
+
+        @* File Template Buttons *@
+        <MudItem Class="ml-auto">
+            @if (_file != null)
+            {
+                <MudTooltip Text="Clear Template">
+                    <MudFab OnClick="ClearTemplateFile"
+                            Class="mr-2"
+                            Color="Color.Primary"
+                            Icon="@Icons.Material.Filled.Clear"
+                            Size="Size.Medium"
+                            IconSize="Size.Large"/>
+                </MudTooltip>
+
+                if (_dataType.Id != 0)
+                {
+                    
+                    <MudTooltip Text="Import Template">
+                        <MudFab OnClick="ImportTemplateFile"
+                                Class="mr-2"
+                                Color="Color.Primary"
+                                Icon="@Icons.Material.Filled.CloudUpload"
+                                Size="Size.Medium"
+                                IconSize="Size.Large"/>
+                    </MudTooltip>
+                }
+                
+                <MudTooltip Text="Apply Template">
+                    <MudFab OnClick="ApplyTemplateFile"
+                            Class="mr-2"
+                            Color="Color.Primary"
+                            Icon="@Icons.Material.Filled.Sync"
+                            Size="Size.Medium"
+                            IconSize="Size.Large"/>
+                </MudTooltip>
+            }
+
+            <MudTooltip Text="Attach Template">
+                <InputFile id="templateFileInput" OnChange="AttachTemplateFile" hidden accept=".zip,.csv"/>
+                <MudFab HtmlTag="label"
+                        Color="Color.Primary"
+                        Icon="@Icons.Material.Filled.AttachFile"
+                        Size="Size.Medium"
+                        IconSize="Size.Large"
+                        for="templateFileInput"/>
+            </MudTooltip>
+
+        </MudItem>
+    </div>
+
+    <MudGrid>
+        @* left column *@
+        <MudItem xs="12" sm="6">
+            <MudTextField T="int" Label="Id" @bind-Value="@_dataType.Id" ReadOnly="true" Disabled="true"/>
+            <MudTextField T="string" Label="Name" @bind-Value="@_dataType.Name"/>
+        </MudItem>
+
+        @* right column *@
+        <MudItem xs="12" sm="6">
+            <MudTextField T="DateTime" Label="Created" Value="@_dataType.Created" ReadOnly="true" Disabled="true"/>
+            <MudTextField T="DateTime" Label="Updated" Value="@_dataType.Updated" ReadOnly="true" Disabled="true"/>
+        </MudItem>
+    </MudGrid>
+
+    <MudDivider Class="mt-6"/>
+    
+    /* Properties List Edit */
+    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mt-6">Properties</MudText>
+    <MudGrid>
+        @foreach (var property in _dataType.Properties)
+        {
+            <MudItem xs="11">
+                <DataTypePropertyEdit DataTypeProperty="@property"/>
+            </MudItem>
+            <MudItem xs="1">
+                <MudFab OnClick="@(_ => RemoveProperty(property))" Color="Color.Error" Icon="@Icons.Material.Filled.Remove" Size="Size.Small" IconSize="Size.Medium" Class="ma-2 ml-auto"/>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <div class="d-flex flex-row">
+        <MudItem Class="ml-auto pa-1">
+            <MudFab OnClick="@(_ => AddProperty())"
+                    Color="Color.Primary"
+                    Icon="@Icons.Material.Filled.Add"
+                    Size="Size.Medium"
+                    IconSize="Size.Large"/>
+        </MudItem>
+    </div>
+}
+
+@code {
+    private DataType _dataType;
+
+    [Parameter]
+    public DataType DataType
+    {
+        get => _dataType;
+        set
+        {
+            if (_dataType == value)
+                return;
+            _dataType = value;
+            DataTypeChanged.InvokeAsync(value);
+            ClearTemplateFile();
+        }
+    }
+
+    [Parameter]
+    public EventCallback<DataType> DataTypeChanged { get; set; }
+
+    private void AddProperty()
+    {
+        _dataType.Properties.Add(new DataTypeProperty());
+    }
+
+    private void RemoveProperty(DataTypeProperty property)
+    {
+        _dataType.Properties.Remove(property);
+    }
+
+    private IBrowserFile _file;
+    private IList<string> _dataHeaders;
+    private IList<IDictionary<string, object>> _sampleRecords;
+
+    private void ClearTemplateFile()
+    {
+        _file = null;
+        _dataHeaders = null;
+        _sampleRecords = null;
+    }
+    private async void AttachTemplateFile(InputFileChangeEventArgs e)
+    {
+        _file = e.File;
+        const int numDataSamples = 10;
+        await using var fileStream = await _file.OpenCompressedFileStream();
+        _sampleRecords = await CsvFileHelpers.ReadCsvAsync(fileStream, numDataSamples);
+        _dataHeaders = _sampleRecords.SelectMany(x => x.Keys).Distinct().ToList();
+        StateHasChanged();
+    }
+
+    private async void ApplyTemplateFile()
+    {
+        var dialog = _dialogService.Show<DeleteDialog>(
+            "Overwrite",
+            new DialogParameters()
+            {
+                {"ContentText", $"Are you sure you want to overwrite the structure of this datatype?"},
+                {"ButtonText", "Confirm"},
+                {"Color", Color.Primary}
+            },
+            new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.ExtraSmall
+            }
+            );
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            _dataType.Properties = _dataHeaders
+                .Select(propName =>
+                    new DataTypeProperty()
+                    {
+                        PropertyName = propName,
+                        PropertyType =
+                            DataTypeProperty.DetectPropertyType(
+                                _sampleRecords
+                                    .FirstOrDefault(x => x[propName] != null)
+                                )
+                    })
+                .ToList();
+            StateHasChanged();
+        }
+    }
+
+    private async void ImportTemplateFile()
+    {
+        var dialog = _dialogService.Show<DeleteDialog>(
+            "Import Data",
+            new DialogParameters()
+            {
+                {
+                    "ContentText", $"This action will import the content of the data file you've attached. " +
+                                   $"Only data that matches properties of the datatype will be imported for each row. " +
+                                   $"Superfluous data which does not match structure will be ignore."
+                },
+                {"ButtonText", "Confirm"},
+                {"Color", Color.Primary}
+            },
+            new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.ExtraSmall
+            }
+            );
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            try
+            {
+                var postFileResult = await _dataService.PostDataFiles(_dataType.Id, _file);
+                if (postFileResult.IsSuccessStatusCode)
+                    _snackbar.Add("File Imported Successfully", Severity.Success);
+                else
+                    _snackbar.Add($"Import Failed with Reason: {postFileResult.ReasonPhrase}", Severity.Error);
+            }
+            catch (Exception e)
+            {
+                _snackbar.Add($"UI Exception Threw with Message: {e.Message}", Severity.Error);
+                Console.WriteLine(e.StackTrace);
+            }
+        }
+    }
+
+}

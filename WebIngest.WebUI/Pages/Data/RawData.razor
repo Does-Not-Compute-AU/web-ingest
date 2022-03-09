@@ -1,0 +1,109 @@
+﻿@page "/data/rawdata"
+@using WebIngest.Common.Models
+@using WebIngest.WebUI.Services
+@using Newtonsoft.Json.Linq
+@inject EntityService _entityService
+@inject DataService _dataService
+
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Raw Data Browser</MudText>
+<MudGrid>
+
+    @if (_dataTypes == null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+    }
+    else
+    {
+        <MudItem xs="12">
+            <MudTable Items="@_dataRows" Dense="true" Hover="true" Bordered="false" Striped="true" Filter="new Func<JObject, bool>(FilterFunc)">
+                <ToolBarContent>
+                    <MudSelect T="int" Label="DataType" @Value="@_dataTypeId" ValueChanged="@DataTypeSelected">
+                        <MudSelectItem Value="0">@String.Empty</MudSelectItem>
+                        @foreach (var dataType in _dataTypes)
+                        {
+                            <MudSelectItem Value="@dataType.Id">@dataType.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSpacer/>
+                    <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+
+                    <MudSpacer/>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@RefreshDataRows">Refresh</MudButton>
+
+                </ToolBarContent>
+                <HeaderContent>
+                    @foreach (var property in @DataTypeProperties)
+                    {
+                        <MudTh>
+                            <MudTableSortLabel SortBy="new Func<JObject, object>(x => x[property])">@property</MudTableSortLabel>
+                        </MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    @foreach (var property in DataTypeProperties)
+                    {
+                        <MudTd DataLabel="@property">
+                            @context[property]
+                        </MudTd>
+                    }
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager/>
+                </PagerContent>
+            </MudTable>
+        </MudItem>
+    }
+</MudGrid>
+
+
+@code {
+    private int _dataTypeId;
+
+    private DataType[] _dataTypes;
+    private IEnumerable<JObject> _dataRows = new List<JObject>();
+    private string searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _dataTypes = await _entityService.GetEntities(typeof(DataType)) as DataType[];
+    }
+    
+    private async Task DataTypeSelected(int arg)
+    {
+        _dataTypeId = arg;
+        await RefreshDataRows();
+    }
+
+    private async Task RefreshDataRows()
+    {
+        _dataRows = _dataTypeId == 0 ? new List<JObject>() : await _dataService.GetData(_dataTypeId);
+    }
+
+    private bool FilterFunc(JObject dataRow)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        foreach (var prop in dataRow.Properties())
+        {
+            if (prop.Value.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    private DataType SelectedDataType =>
+        _dataTypes.First(x => x.Id == _dataTypeId);
+
+    private List<String> DataTypeProperties =>
+        _dataTypeId != 0 && _dataTypes != null
+            ? new[] {nameof(DataOrigin)}
+                .Concat(SelectedDataType
+                    .Properties
+                    .Select(x => x.PropertyName)
+                )
+                .Concat(new[] {"CreatedAt"})
+                .ToList()
+            : new();
+}

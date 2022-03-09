@@ -1,0 +1,29 @@
+﻿@using Microsoft.Extensions.Configuration
+@using WebIngest.Common.Extensions
+@inject IConfiguration _configuration
+
+<MudNavMenu Class="mt-4">
+    <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">Home</MudNavLink>
+
+    @*<MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-3">Data</MudText>
+    <MudNavLink Href="data/summary" Icon="@Icons.Material.Outlined.Layers" Disabled="true">Summary</MudNavLink>
+    <MudNavLink Href="data/rawdata" Icon="@Icons.Material.Outlined.TableView">Raw Data</MudNavLink>*@
+
+    <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-3">Ingest</MudText>
+    <MudNavLink Href="ingest/dataorigins" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.GetApp">Data Origins</MudNavLink>
+    <MudNavLink Href="ingest/datatypes" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.DesignServices">Data Types</MudNavLink>
+    <MudNavLink Href="ingest/mappings" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Compare">Mappings</MudNavLink>
+    
+    @*<MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-3">Digest</MudText>
+    <MudNavLink Href="digest/transforms" Icon="@Icons.Material.Outlined.Transform" Disabled="true">Transforms</MudNavLink>
+    <MudNavLink Href="digest/targets" Icon="@Icons.Material.Outlined.Outbond" Disabled="true">Targets</MudNavLink>*@
+    
+    <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-3">Developer</MudText>
+    <MudNavLink Href="swagger" Icon="@Icons.Material.Outlined.Api">Swagger</MudNavLink>
+    <MudNavLink Href="jobs" Icon="@Icons.Material.Outlined.DynamicForm">Hangfire</MudNavLink>
+    
+    <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-3">WebIngest</MudText>
+    <MudNavLink Href="https://webingest.com.au/" Icon="@Icons.Material.Outlined.Public">WebSite</MudNavLink>
+    <MudNavLink Href="https://gitlab.com/does-not-compute/web-ingest" Icon="@Icons.Material.Outlined.Source">Source Code</MudNavLink>
+    
+</MudNavMenu>

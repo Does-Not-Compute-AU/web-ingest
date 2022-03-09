@@ -1,0 +1,37 @@
+image: mcr.microsoft.com/dotnet/sdk:6.0
+
+stages:
+  - test
+  - publish
+
+test:
+  only: 
+    - dev
+    - master
+  stage: test
+  script:
+    - dotnet restore web-ingest.sln
+    - dotnet test  web-ingest.sln --test-adapter-path:. --logger:"junit;LogFilePath=..\artifacts\{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+  artifacts:
+    when: always
+    paths:
+      - ./**/*test-result.xml
+    reports:
+      junit:
+        - ./**/*test-result.xml
+
+publish:
+  image: docker:19.03.12
+  only:
+    - master
+  stage: publish
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  services:
+    - docker:19.03.12-dind
+  script:
+    - docker info
+    - echo -n $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest

@@ -1,0 +1,84 @@
+@using WebIngest.Common.Models
+@using WebIngest.Common.Extensions
+@using WebIngest.Common.Models.OriginConfiguration
+@using WebIngest.WebUI.Editors.OriginTypeConfiguration
+
+@if (_dataOrigin == null)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+}
+else
+{
+    <MudText Typo="Typo.h5" Color="Color.Primary">Info</MudText>
+    <MudGrid>
+        @* left column *@
+        <MudItem xs="12" sm="6">
+            <MudTextField T="int" Label="Id" @bind-Value="@_dataOrigin.Id" ReadOnly="true" Disabled="true"/>
+            <MudTextField T="string" Label="Name" @bind-Value="@_dataOrigin.Name"/>
+            <MudTextField T="int" Label="Workers" @bind-Value="@_dataOrigin.Workers"/>
+            <MudSelect T="OriginType" Label="OriginType" @bind-Value="@_dataOrigin.OriginType">
+                @foreach (var type in Enum.GetValues<OriginType>())
+                {
+                    <MudSelectItem Value="@type">@type</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        @* right column *@
+        <MudItem xs="12" sm="6">
+            <MudTextField T="DateTime" Label="Created" Value="@_dataOrigin.Created" ReadOnly="true" Disabled="true"/>
+            <MudTextField T="DateTime" Label="Updated" Value="@_dataOrigin.Updated" ReadOnly="true" Disabled="true"/>
+            <MudTextField T="string" Label="Schedule" @bind-Value="@_dataOrigin.Schedule"/>
+            <MudSelect T="ContentType" Label="ContentType" @bind-Value="@_dataOrigin.ContentType">
+                @foreach (var type in Enum.GetValues<ContentType>())
+                {
+                    <MudSelectItem Value="@type">@type</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+
+    </MudGrid>
+
+    <MudDivider Class="mt-6"/>
+    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mt-6">Configuration</MudText>
+    <MudGrid Class="pa-4">
+
+        @switch (_dataOrigin.OriginType)
+        {
+            case OriginType.HTTP:
+                <HttpConfigurationEdit
+                    HttpConfiguration="@(_dataOrigin.OriginTypeConfiguration.HttpConfiguration)"/>
+                break;
+            case OriginType.SiteMapCrawler:
+                <SiteMapCrawlerConfigurationEdit
+                    SiteMapCrawlerConfiguration="@(_dataOrigin.OriginTypeConfiguration.SiteMapCrawlerConfiguration)"/>
+                break;
+            case OriginType.Scripted:
+                <ScriptedConfigurationEdit
+                    ScriptedConfiguration="@(_dataOrigin.OriginTypeConfiguration.ScriptedConfiguration)"/>
+                break;
+        }
+    </MudGrid>
+}
+
+@code {
+
+    private DataOrigin _dataOrigin;
+
+    [Parameter]
+    public DataOrigin DataOrigin
+    {
+        get => _dataOrigin;
+        set
+        {
+            if (_dataOrigin == value) return;
+            _dataOrigin = value;
+            DataOriginChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<DataOrigin> DataOriginChanged { get; set; }
+
+}

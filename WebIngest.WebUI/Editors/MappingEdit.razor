@@ -1,0 +1,128 @@
+@using WebIngest.Common.Models
+@using WebIngest.Common.Extensions
+@using WebIngest.WebUI.Services
+@inject EntityService _entityService
+
+@if (_mapping == null || _dataOrigins == null || _dataTypes == null)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+}
+else
+{
+    <MudText Typo="Typo.h5" Color="Color.Primary">Info</MudText>
+    <MudGrid>
+        @* left column *@
+        <MudItem xs="12" sm="6">
+            <MudTextField T="int" Label="Id" @bind-Value="@_mapping.Id" ReadOnly="true" Disabled="true"/>
+            <MudSelect T="int?" Label="DataOrigin" Value="@_dataOriginId" ValueChanged="DataOriginChanged">
+                @foreach (var dataOrigin in _dataOrigins)
+                {
+                    int? itemId = dataOrigin.Id;
+                    <MudSelectItem Value="@itemId">@dataOrigin.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="int?" Label="DataType" Value="_dataTypeId" ValueChanged="DataTypeChanged">
+                @foreach (var dataType in _dataTypes)
+                {
+                    int? itemId = dataType.Id;
+                    <MudSelectItem Value="@itemId">@dataType.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        @* right column *@
+        <MudItem xs="12" sm="6">
+            <MudTextField T="DateTime" Label="Created" Value="@_mapping.Created" ReadOnly="true" Disabled="true"/>
+            <MudTextField T="DateTime" Label="Updated" Value="@_mapping.Updated" ReadOnly="true" Disabled="true"/>
+        </MudItem>
+
+    </MudGrid>
+
+    <MudDivider Class="mt-6"/>
+    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mt-6">Property Mapping</MudText>
+    <MudGrid Class="pa-4">
+        <MudGrid>
+            @foreach (var propertyMapping in _mapping.PropertyMappings)
+            {
+                // put a divider between properties
+                if (propertyMapping != _mapping.PropertyMappings.First())
+                {
+                    <MudItem xs="12">
+                        <MudDivider/>
+                    </MudItem>
+                }
+
+                <MudItem xs="11">
+                    <PropertyMappingEdit PropertyMapping="@propertyMapping" DataType="@_mapping.DataType"/>
+                </MudItem>
+                <MudItem xs="1">
+                    <MudFab OnClick="@(_ => RemovePropertyMapping(propertyMapping))" Color="Color.Error" Icon="@Icons.Material.Filled.Remove" Size="Size.Small" IconSize="Size.Medium" Class="ma-2 ml-auto"/>
+                </MudItem>
+            }
+        </MudGrid>
+        <div class="d-flex flex-row">
+            <MudFab OnClick="@(_ => AddPropertyMapping())" Color="Color.Secondary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" IconSize="Size.Medium" Class="ml-auto"/>
+        </div>
+    </MudGrid>
+}
+
+@code {
+    private Mapping _mapping;
+
+    private DataOrigin[] _dataOrigins;
+    private DataType[] _dataTypes;
+
+    private int? _dataOriginId = null;
+    private int? _dataTypeId = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _dataOrigins = await _entityService.GetEntities(typeof(DataOrigin)) as DataOrigin[];
+        _dataTypes = await _entityService.GetEntities(typeof(DataType)) as DataType[];
+    }
+
+    [Parameter]
+    public Mapping Mapping
+    {
+        get => _mapping;
+        set
+        {
+            if (_mapping == value) return;
+            _mapping = value;
+            _dataTypeId = _mapping.DataTypeId == 0 ? null : _mapping.DataTypeId;
+            _dataOriginId = _mapping.DataOriginId == 0 ? null : _mapping.DataOriginId;
+
+            MappingChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<Mapping> MappingChanged { get; set; }
+
+    private void AddPropertyMapping()
+    {
+        _mapping.PropertyMappings.Add(new());
+    }
+
+    private void RemovePropertyMapping(PropertyMapping propertyMapping)
+    {
+        _mapping.PropertyMappings.Remove(propertyMapping);
+    }
+
+    private void DataOriginChanged(int? value)
+    {
+        if (value == null) return;
+        _dataOriginId = value;
+        _mapping.DataOriginId = (int) value;
+        _mapping.DataOrigin = _dataOrigins.First(x => x.Id == _dataOriginId);
+    }
+
+    private void DataTypeChanged(int? value)
+    {
+        if (value == null) return;
+        _dataTypeId = value;
+        _mapping.DataTypeId = (int) value;
+        _mapping.DataType = _dataTypes.First(x => x.Id == _dataTypeId);
+    }
+
+}

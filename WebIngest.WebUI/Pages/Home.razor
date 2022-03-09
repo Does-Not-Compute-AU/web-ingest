@@ -1,0 +1,49 @@
+﻿@page "/"
+@page "/home"
+@using WebIngest.WebUI.Services.Hubs
+@using WebIngest.Common.Models.Messaging
+@inject SignalRService _signalRService
+
+<MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Web Ingest Home</MudText>
+
+<MudGrid>
+    @if (_viewModel != null)
+    {
+        @foreach (var statistics in _viewModel.OriginStatistics)
+        {
+            <MudItem xs="12" md="6">
+                <MudCard>
+                    <MudCardContent><MudGrid>
+                            <MudItem xs="6" md="6" lg="3">
+                                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@statistics.OriginName</MudText>
+                            </MudItem>
+                            <MudItem xs="6" md="6" lg="3">
+                                <MudText Color="Color.Primary">@statistics.OriginSchedule</MudText>
+                            </MudItem>
+                            <MudItem xs="12" lg="6">
+                                <StatsCounters ViewModel="@statistics"/>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    }
+</MudGrid>
+
+@code {
+    private HomePageViewModel _viewModel;
+
+    protected override void OnInitialized()
+    {
+        _signalRService.HomePageSubscriber(viewModel =>
+        {
+            _viewModel = viewModel;
+            StateHasChanged();
+        });
+
+        if (_viewModel == null)
+            _signalRService.RefreshHomePageStats();
+    }
+
+}

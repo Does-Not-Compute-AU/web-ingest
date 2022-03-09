@@ -1,0 +1,66 @@
+﻿@page "/login"
+@page "/auth/login"
+@using WebIngest.Common.Models.AuthModels
+@using WebIngest.WebUI.Services.Auth
+@layout LoginLayout
+@inject AuthService _authService
+
+
+<MudText Typo="Typo.h4" GutterBottom="true">Sign In</MudText>
+<MudText>Don't have an account? <MudLink Href="/auth/register">Sign Up</MudLink></MudText>
+<MudTextField T="string" @bind-Value="@_loginModel.Email" Label="E-mail" Variant="Variant.Outlined" Class="my-6"></MudTextField>
+<MudTextField @bind-Value="@_loginModel.Password" Label="Password" Variant="Variant.Outlined" InputType="@_passwordInput" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility" />
+
+<div Class="d-flex justify-space-between align-center">
+    <MudCheckBox T="bool" @bind-Checked="@_loginModel.RememberMe" Label="Remember me?" Color="Color.Primary" Class="ml-n1 my-3"></MudCheckBox>
+    <MudLink Href="/auth/forgot-password">Forgot pwd?</MudLink>
+</div>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="HandleLogin" FullWidth="true">Sign In</MudButton>
+
+@if (_showErrors)
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+
+@code {
+    bool _passwordVisibility;
+    InputType _passwordInput = InputType.Password;
+    string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    void TogglePasswordVisibility()
+    {
+        @if (_passwordVisibility)
+        {
+            _passwordVisibility = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInput = InputType.Password;
+        }
+        else
+        {
+            _passwordVisibility = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInput = InputType.Text;
+        }
+    }
+    
+    private readonly LoginModel _loginModel = new();
+    private bool _showErrors;
+    private string _error = "";
+
+    private async Task HandleLogin()
+    {
+        _showErrors = false;
+
+        var result = await _authService.Login(_loginModel);
+
+        if (result.Successful)
+        {
+            StateHasChanged();
+        }
+        else
+        {
+            _error = result.Error;
+            _showErrors = true;
+        }
+    }
+}

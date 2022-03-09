@@ -1,0 +1,74 @@
+﻿@using WebIngest.Common.Models.OriginConfiguration
+@using WebIngest.Common.Models.OriginConfiguration.Types
+@using WebIngest.WebUI.Services
+@inject ScriptingService _scriptingService
+@inject ISnackbar _snackbar
+
+<MudGrid>
+    <div class="mt-2 pa-2" style="height: 600px; width: 100%;">
+        <MudButton Class="ma-2 ml-auto" Variant="Variant.Filled" Color="Color.Primary" OnClick="@TestScript">Test</MudButton>
+        <MudDivider Class="mt-6"/>
+        <MonacoEditor Id="someID"
+                      CssClass="mud-height-full mud-width-full"
+                      ConstructionOptions="@EditorConstructionOptions"
+                      @ref="_editor"
+                      OnDidChangeModelContent="@SetValue"/>
+    </div>
+</MudGrid>
+
+
+@code {
+    private MonacoEditor _editor;
+    private ScriptedConfiguration _scriptedConfiguration;
+
+    [Parameter]
+    public ScriptedConfiguration ScriptedConfiguration
+    {
+        get => _scriptedConfiguration;
+        set
+        {
+            if (_scriptedConfiguration == value) return;
+            _scriptedConfiguration = value;
+            ScriptedConfigurationChanged.InvokeAsync(value);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<ScriptedConfiguration> ScriptedConfigurationChanged { get; set; }
+
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(MonacoEditor editor)
+    {
+        return new()
+        {
+            AutomaticLayout = true,
+            Language = "csharp",
+            Theme = "vs-dark",
+            Value = _scriptedConfiguration.CSharpScript ?? string.Empty
+        };
+    }
+
+    private async Task SetValue()
+    {
+        _scriptedConfiguration.CSharpScript = await _editor.GetValue();
+    }
+
+    private async void TestScript()
+    {
+        var res = await _scriptingService.TestScript(_scriptedConfiguration.CSharpScript);
+        if (res.IsSuccessStatusCode)
+        {
+            _snackbar.Add("Script Compiled Succesfully", Severity.Success);
+        }
+        else
+        {
+            var errorMessage = await res.Content.ReadAsStringAsync();
+            foreach (var message in errorMessage.Split(Environment.NewLine))
+            {
+                _snackbar.Add(message, Severity.Warning, opt =>
+                {
+                    opt.VisibleStateDuration = 10000;
+                });
+            }
+        }
+    }
+}

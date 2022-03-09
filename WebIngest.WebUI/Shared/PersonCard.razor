@@ -1,0 +1,26 @@
+﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Components.Authorization
+@using WebIngest.WebUI.Services.Auth
+@using System.Security.Cryptography
+@using System.Text
+@using WebIngest.Common.Extensions
+@inject AuthService _authService
+
+<MudCard Elevation="0" Square="true" Class="@Class" Style="@Style">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudAvatar Image=@AvatarUrl Square="true" Color="Color.Transparent"/>
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.body2">@Email</MudText>
+            <MudText Typo="Typo.caption"></MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+</MudCard>
+
+@code {
+    [Parameter] public string Class { get; set; }
+    [Parameter] public string Style { get; set; }
+    [Parameter] public string Email { get; set; }
+    [Parameter] public string AvatarUrl { get; set; }
+}

@@ -1,0 +1,70 @@
+﻿@page "/auth/register"
+@using WebIngest.Common.Models.AuthModels
+@using WebIngest.WebUI.Services.Auth
+@layout LoginLayout
+@inject AuthService _authService
+@inject NavigationManager _navigationManager
+
+<MudText Typo="Typo.h4" GutterBottom="true">Sign Up</MudText>
+<MudText>Already have an account? <MudLink Href="/auth/login">Sign In</MudLink></MudText>
+
+<MudTextField T="string" @bind-Value="@_registerModel.Email" Variant="Variant.Outlined"></MudTextField>
+
+<MudTextField @bind-Value="@_registerModel.Password" Label="Password" Variant="Variant.Outlined" InputType="@_passwordInput" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility" Class="mt-4"/>
+
+<MudTextField @bind-Value="@_registerModel.ConfirmPassword" Label="Confirm Password" Variant="Variant.Outlined" InputType="@_passwordInput" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility" Class="mt-4"/>
+
+<MudCheckBox @bind-Checked="@_registerModel.AcceptTerms" Label="I accept and agree to the Terms of Service" Color="Color.Primary" Class="ml-n1 my-3"></MudCheckBox>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_registerModel.AcceptTerms)" OnClick="HandleRegistration" Size="Size.Large" FullWidth="true">Register</MudButton>
+
+@if (_showErrors)
+{
+    foreach (var error in _errors)
+    {
+        <MudAlert Severity="Severity.Error">@error</MudAlert>
+    }
+}
+
+@code {
+    bool _passwordVisibility;
+    InputType _passwordInput = InputType.Password;
+    string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    void TogglePasswordVisibility()
+    {
+        @if (_passwordVisibility)
+        {
+            _passwordVisibility = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInput = InputType.Password;
+        }
+        else
+        {
+            _passwordVisibility = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInput = InputType.Text;
+        }
+    }
+    
+    private readonly RegisterModel _registerModel = new();
+    private bool _showErrors;
+    private IEnumerable<string> _errors;
+
+    private async Task HandleRegistration()
+    {
+        _showErrors = false;
+
+        var result = await _authService.Register(_registerModel);
+
+        if (result.Successful)
+        {
+            _navigationManager.NavigateTo("/");
+        }
+        else
+        {
+            _errors = result.Errors;
+            _showErrors = true;
+        }
+    }
+}
