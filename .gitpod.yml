@@ -1,0 +1,15 @@
+# From template: https://github.com/gitpod-io/template-dotnet-core-cli-csharp
+# Docs https://www.gitpod.io/docs/config-gitpod-file
+image: gitpod/workspace-dotnet:latest
+  
+tasks:
+  - name: "Start Containers, Install Dotnet, Start WebAPI"
+    init: |
+      docker-compose up -d
+      dotnet dev-certs https 
+      dotnet build WebIngest.WebAPI/
+    command: dotnet run watch --project WebIngest.WebAPI/
+
+vscode:
+  extensions:
+    - muhammad-sammy.csharp

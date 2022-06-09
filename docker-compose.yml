@@ -16,7 +16,7 @@ services:
   
 # REQUIRED - MessageBus for SignalR & Hangfire BackgroundJob Scheduler
   redis:
-    image: bitnami/redis
+    image: bitnami/redis:6.2.7
     environment:
       TZ: ${TIMEZONE}
       ALLOW_EMPTY_PASSWORD: 'yes'
