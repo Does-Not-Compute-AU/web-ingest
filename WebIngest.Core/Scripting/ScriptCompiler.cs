@@ -15,10 +15,13 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System.Runtime.Loader;
+using System.Threading.Tasks;
+using TurnerSoftware.SitemapTools;
 using WebIngest.Common.Extensions;
 using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Common.Models.OriginConfiguration.Types;
 using WebIngest.Core.Scraping;
+using WebIngest.Core.Scraping.WebClients;
 
 
 namespace WebIngest.Core.Scripting
@@ -34,24 +37,35 @@ namespace WebIngest.Core.Scripting
         private static readonly IEnumerable<Type> ClassWhitelist = new[]
         {
             typeof(object),
+            typeof(Object),
             typeof(ExpandoObject),
             typeof(Console),
-            typeof(HttpClient),
+            typeof(Component),
             typeof(BitArray),
             typeof(Enumerable),
             typeof(List<>),
+            typeof(Task<>),
+            
             typeof(Uri),
             typeof(WebClient),
-            typeof(Component),
             typeof(WebProxy),
+            typeof(IWebProxy),
+            typeof(HttpClient),
+            typeof(HttpClientHandler),
             typeof(IDataReader),
             
             // webingest domain
+            typeof(IngestWebClient),
             typeof(ScrapingHelpers),
+            typeof(WebIngestClientHelpers),
             typeof(JsonExtensions),
             typeof(Common.Extensions.CollectionExtensions),
             typeof(OriginTypeConfiguration),
             typeof(HttpConfiguration),
+            
+            // 3rd party libs
+            typeof(SitemapQuery),
+            typeof(SitemapEntry)
         };
 
         public ScriptCompiler(string scriptSource)
@@ -154,6 +168,7 @@ namespace WebIngest.Core.Scripting
 
             var referenceLocations = new List<string>
             {
+                Assembly.Load("netstandard").Location,
                 Assembly.Load("System.Runtime").Location,
                 typeof(System.Runtime.AssemblyTargetedPatchBandAttribute).Assembly.Location,
                 typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo).Assembly.Location

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
+using System.Net.Http;
 using Hangfire;
 using WebIngest.Common.Extensions;
 using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Core.Scraping;
+using WebIngest.Core.Scraping.WebClients;
 
 namespace WebIngest.Core.Jobs.FetchJobs
 {
@@ -40,11 +42,10 @@ namespace WebIngest.Core.Jobs.FetchJobs
         [AutomaticRetry(Attempts = 1, DelaysInSeconds = new []{900}, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
         public static string FetchHttp(string dataSourceName, string url, OriginTypeConfiguration originConfig)
         {
-            using var client = new IngestWebClient(
-                originConfig.HttpConfiguration.RandomUserAgents,
-                originConfig.HttpConfiguration.SpecifiedUserAgent
-            );
-            client.Proxy = originConfig.HttpConfiguration.Proxy;
+
+            IWebIngestWebClient client = originConfig.HttpConfiguration.UseSeleniumDriver
+                ? new SeleniumWebClient(originConfig.HttpConfiguration)
+                : new IngestWebClient(originConfig.HttpConfiguration);
 
             var data = string.Empty;
             try

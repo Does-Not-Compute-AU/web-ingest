@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using NUnit.Framework;
+using TurnerSoftware.SitemapTools;
 using WebIngest.Common.Extensions;
 using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Common.Models.OriginConfiguration.Types;
+using WebIngest.Core.Scraping;
 using WebIngest.Core.Scripting;
 
 namespace WebIngest.Tests.Core.Unit.Scripting
@@ -32,10 +36,10 @@ namespace WebIngest.Tests.Core.Unit.Scripting
                 .Compile()
                 .Execute()
                 .GetResult();
-            
-            Assert.AreEqual(null,res);
+
+            Assert.AreEqual(null, res);
         }
-        
+
         [Test]
         public void ReturnsStrings()
         {
@@ -49,7 +53,7 @@ namespace WebIngest.Tests.Core.Unit.Scripting
             const string expectation = "Hello World";
             Assert.AreEqual(expectation, res);
         }
-        
+
         [Test]
         public void ReturnsIntegers()
         {
@@ -67,7 +71,8 @@ namespace WebIngest.Tests.Core.Unit.Scripting
         [Test]
         public void ReturnsHttpConfigurationWithProxy()
         {
-            var script = "var wordList = new List<string>(){ \r\n    \"WordA\", \"WordB\", \"WordC\"\r\n};\r\nvar urlList = new List<string>();\r\nforeach (var word in wordList)\r\n{\r\n    urlList.Add($\"https://www.google.com/search?q={word}\");\r\n}\r\n\r\nreturn new HttpConfiguration()\r\n{\r\n    Urls = urlList,\r\n    ProxyAddress = \"http://localhost:8080\"\r\n};";
+            var script =
+                "var wordList = new List<string>(){ \r\n    \"WordA\", \"WordB\", \"WordC\"\r\n};\r\nvar urlList = new List<string>();\r\nforeach (var word in wordList)\r\n{\r\n    urlList.Add($\"https://www.google.com/search?q={word}\");\r\n}\r\n\r\nreturn new HttpConfiguration()\r\n{\r\n    Urls = urlList,\r\n    ProxyAddress = \"http://localhost:8080\"\r\n};";
             var res = new ScriptCompiler(script)
                 .GenerateSourceFromScript()
                 .Compile()
@@ -84,8 +89,8 @@ namespace WebIngest.Tests.Core.Unit.Scripting
                 },
                 ProxyAddress = "http://localhost:8080"
             };
-            
-            Assert.AreEqual(expectation.ToJson(), res.ToJson()); 
+
+            Assert.AreEqual(expectation.ToJson(), res.ToJson());
         }
     }
 }

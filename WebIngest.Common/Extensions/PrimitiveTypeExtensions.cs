@@ -33,11 +33,21 @@ namespace WebIngest.Common.Extensions
             return @this.RegexReplace(@">(\s)<", string.Empty);
         }
 
+        public static string NullIfEmpty(this string s)
+        {
+            return string.IsNullOrEmpty(s) ? null : s;
+        }
+
+        public static string NullIfWhiteSpace(this string s)
+        {
+            return string.IsNullOrWhiteSpace(s) ? null : s;
+        }
+
         public static T ParseEnum<T>(this string value)
         {
-            return (T) Enum.Parse(typeof(T), value, true);
+            return (T)Enum.Parse(typeof(T), value, true);
         }
-        
+
         public static string CreateMd5(this string input)
         {
             // Use input string to calculate MD5 hash
@@ -52,12 +62,14 @@ namespace WebIngest.Common.Extensions
                 {
                     sb.Append(hashBytes[i].ToString("X2"));
                 }
+
                 return sb.ToString();
             }
         }
 
         public static string PrintTruncate(this int num) => PrintTruncate(Convert.ToDecimal(num));
         public static string PrintTruncate(this long num) => PrintTruncate(Convert.ToDecimal(num));
+
         public static string PrintTruncate(this decimal num) => num switch
         {
             > 999999999999999 => num.ToString("0,,,,,.#QD", CultureInfo.InvariantCulture),

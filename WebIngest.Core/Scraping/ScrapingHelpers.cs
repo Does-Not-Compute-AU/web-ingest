@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using TurnerSoftware.SitemapTools;
 using WebIngest.Common.Extensions;
+using WebIngest.Core.Scraping.WebClients;
 
 namespace WebIngest.Core.Scraping
 {
@@ -14,8 +15,16 @@ namespace WebIngest.Core.Scraping
         {
             var baseUri = new Uri(url);
             var sitemapQuery = new SitemapQuery();
-            var queryRes = await sitemapQuery.GetAllSitemapsForDomainAsync(baseUri.Host);
-            
+            IEnumerable<SitemapFile> queryRes = Enumerable.Empty<SitemapFile>();
+            try
+            {
+                queryRes = await sitemapQuery.GetAllSitemapsForDomainAsync(baseUri.Host);
+            }
+            catch
+            {
+                // ignored
+            }
+
             var sitemapEntries = queryRes.ToList();
 
             // if no sitemap entries found, try fetching robots.txt with added headers
@@ -25,7 +34,7 @@ namespace WebIngest.Core.Scraping
                 {
                     DefaultRequestHeaders =
                     {
-                        {"user-agent", IngestWebClient.GetRandomUserAgent()},
+                        {"user-agent", WebIngestClientHelpers.GetRandomUserAgent()},
                         {"origin", baseUri.GetLeftPart(UriPartial.Authority)},
                         {"user-agent", baseUri.Host},
                         {"accept", "application/xml"}

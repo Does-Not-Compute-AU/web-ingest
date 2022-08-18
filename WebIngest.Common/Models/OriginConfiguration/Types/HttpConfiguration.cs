@@ -8,6 +8,7 @@ namespace WebIngest.Common.Models.OriginConfiguration.Types
     public class HttpConfiguration
     {
         public bool ThrowWebExceptions { get; set; }
+        public bool UseSeleniumDriver { get; set; }
         public bool ShuffleUrls { get; set; }
         public bool RandomUserAgents { get; set; }
         public bool ProxyRequests { get; set; }

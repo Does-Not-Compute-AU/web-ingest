@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
+using WebIngest.Common.Extensions;
 using WebIngest.Common.Models;
 using WebIngest.Common.Models.OriginConfiguration;
 
@@ -28,7 +30,11 @@ namespace WebIngest.Core.Extraction
                 var selector = prop.TransformSelectorVars(originConfig);
                 var htmlNodes = htmlDoc.QuerySelectorAll(selector);
                 extractedResults = htmlNodes
-                    .Select(x => x.Attributes["value"]?.Value ?? x.TextContent)
+                    .Select(x =>
+                        x.Attributes["value"]?.Value.NullIfEmpty() ??
+                        x.TextContent.NullIfEmpty() ??
+                        x.Attributes["content"]?.Value.NullIfEmpty()
+                    )
                     .ToList(); // add them to the values list
 
                 if (extractedResults.Any())
