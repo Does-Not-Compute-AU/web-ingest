@@ -46,5 +46,18 @@ namespace WebIngest.Tests.Core.Unit.Extraction
             // oh no, you've lost your soul :(
             Assert.AreEqual(expectation, transform.DoRegexReplace(testString));
         }
+
+        [Test]
+        public void RegexMatchMany()
+        {
+            string testString = "You have power over your mind";
+            var transform = new RegexTransform()
+            {
+                MatchPattern = @"\w",
+                MatchResultSeparator = "-"
+            };
+            string expectation = "Y-o-u-h-a-v-e-p-o-w-e-r-o-v-e-r-y-o-u-r-m-i-n-d";
+            Assert.AreEqual(expectation, transform.DoRegexMatch(testString));
+        }
     }
 }

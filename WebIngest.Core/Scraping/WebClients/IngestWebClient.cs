@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net;
-using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Common.Models.OriginConfiguration.Types;
 
 namespace WebIngest.Core.Scraping.WebClients

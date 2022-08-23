@@ -9,7 +9,6 @@ using Hangfire;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace WebIngest.WebAPI.BackgroundServices
 {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -53,6 +54,9 @@ namespace WebIngest.Core.Scripting
             typeof(HttpClient),
             typeof(HttpClientHandler),
             typeof(IDataReader),
+            
+            typeof(ConcurrentBag<>),
+            typeof(Parallel),
             
             // webingest domain
             typeof(IngestWebClient),

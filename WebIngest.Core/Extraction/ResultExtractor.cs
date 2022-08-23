@@ -10,6 +10,8 @@ namespace WebIngest.Core.Extraction
         {
             if (!string.IsNullOrEmpty(propMapping.RegexTransform?.FindPattern))
                 value = propMapping.RegexTransform.DoRegexReplace(value);
+            else if (!string.IsNullOrEmpty(propMapping.RegexTransform?.MatchPattern))
+                value = propMapping.RegexTransform.DoRegexMatch(value);
 
             var propType = mapping.DataType.PropertyTypeOf(propMapping.DataTypeProperty);
             object result = ParsePropertyType(propType, value);

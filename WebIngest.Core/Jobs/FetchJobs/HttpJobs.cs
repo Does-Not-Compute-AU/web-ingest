@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
-using System.Net.Http;
 using Hangfire;
 using WebIngest.Common.Extensions;
 using WebIngest.Common.Models.OriginConfiguration;
-using WebIngest.Core.Scraping;
 using WebIngest.Core.Scraping.WebClients;
 
 namespace WebIngest.Core.Jobs.FetchJobs

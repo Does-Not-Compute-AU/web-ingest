@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
 using NUnit.Framework;
-using TurnerSoftware.SitemapTools;
 using WebIngest.Common.Extensions;
-using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Common.Models.OriginConfiguration.Types;
-using WebIngest.Core.Scraping;
 using WebIngest.Core.Scripting;
 
 namespace WebIngest.Tests.Core.Unit.Scripting

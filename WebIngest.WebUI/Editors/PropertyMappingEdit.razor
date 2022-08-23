@@ -19,6 +19,13 @@
     <MudItem xs="12" sm="6">
         <MudTextField T="string" Label="Regex Replace" @bind-Value="@_propertyMapping.RegexTransform.ReplacePattern"/>
     </MudItem>
+
+    <MudItem xs="12" sm="6">
+        <MudTextField T="string" Label="Match Pattern" @bind-Value="@_propertyMapping.RegexTransform.MatchPattern"/>
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField T="string" Label="Match Result Separator" @bind-Value="@_propertyMapping.RegexTransform.MatchResultSeparator"/>
+    </MudItem>
     
 </MudGrid>
 

@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using NUnit.Framework;
-using WebIngest.Common.Extensions;
 using WebIngest.Common.Models;
 using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Core.Extraction;

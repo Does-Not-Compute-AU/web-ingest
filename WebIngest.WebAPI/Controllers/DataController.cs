@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebIngest.Common;
 using WebIngest.Common.Extensions;
-using WebIngest.Common.FileExtensions;
 using WebIngest.Core.Data;
 using WebIngest.Core.Jobs;
 using WebIngest.WebAPI.CustomAttributes;

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using WebIngest.Common.Extensions;
 
 namespace WebIngest.Common.Utils
 {
