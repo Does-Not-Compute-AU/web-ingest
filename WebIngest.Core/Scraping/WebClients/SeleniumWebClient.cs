@@ -25,14 +25,17 @@ public class SeleniumWebClient : IWebIngestWebClient
         try
         {
             driver.Navigate().GoToUrl(url);
-
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
+            var timeout = TimeSpan.FromSeconds(_httpConfiguration.SeleniumTimeoutSeconds);
+            var wait = new WebDriverWait(driver, timeout);
             wait.Until(x => x.FindElement(By.TagName("html")).Displayed);
 
             // TODO Driver wait-for-page needs serious improvement
-            Thread.Sleep(TimeSpan.FromMilliseconds(3000));
+            var pageRenderWait = TimeSpan.FromSeconds(_httpConfiguration.SeleniumRenderWaitSeconds);
+            Thread.Sleep(pageRenderWait);
 
-            html = driver.FindElement(By.TagName("html")).GetAttribute("innerHTML");
+            html = driver
+                .FindElement(By.TagName("html"))
+                .GetAttribute("innerHTML");
         }
         catch(Exception e)
         {

@@ -8,6 +8,8 @@ namespace WebIngest.Common.Models.OriginConfiguration.Types
     {
         public bool ThrowWebExceptions { get; set; }
         public bool UseSeleniumDriver { get; set; }
+        public int SeleniumRenderWaitSeconds { get; set; } = 0;
+        public int SeleniumTimeoutSeconds { get; set; } = 15;
         public bool ShuffleUrls { get; set; }
         public bool RandomUserAgents { get; set; }
         public bool ProxyRequests { get; set; }
