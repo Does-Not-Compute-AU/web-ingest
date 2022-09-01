@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using WebIngest.Common.Interfaces;
 
 namespace WebIngest.Common.Models
@@ -23,5 +24,9 @@ namespace WebIngest.Common.Models
         [Display] public string DataTypeName => DataType.Name;
 
         public List<PropertyMapping> PropertyMappings { get; set; } = new();
+
+        [NotMapped]
+        public IEnumerable<PropertyMapping> NonLiteralPropertyMappings =>
+            PropertyMappings.Where(p => !p.SelectorIsLiteral);
     }
 }
