@@ -21,7 +21,7 @@ namespace WebIngest.Core.Extraction
 
             // do html-selectors for non-literals
             var objectValues = new List<IDictionary<string, object>>();
-            foreach (var prop in mapping.PropertyMappings.Where(p => !p.SelectorIsLiteral))
+            foreach (var prop in mapping.NonLiteralPropertyMappings)
             {
                 List<string> extractedResults = null;
                 // get all nodes that match selector
@@ -31,7 +31,7 @@ namespace WebIngest.Core.Extraction
                 extractedResults = htmlNodes
                     .Select(x =>
                         x.Attributes["value"]?.Value.NullIfEmpty() 
-                        ?? x.TextContent.NullIfEmpty() 
+                        ?? x.TextContent.Trim().NullIfEmpty() 
                         ?? x.Attributes["content"]?.Value.NullIfEmpty() 
                         ?? x.InnerHtml 
                     )

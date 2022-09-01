@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Dynamic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -18,6 +19,7 @@ using Microsoft.CodeAnalysis.Text;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
 using TurnerSoftware.SitemapTools;
+using TurnerSoftware.SitemapTools.Parser;
 using WebIngest.Common.Extensions;
 using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Common.Models.OriginConfiguration.Types;
@@ -58,6 +60,10 @@ namespace WebIngest.Core.Scripting
             typeof(ConcurrentBag<>),
             typeof(Parallel),
             
+            typeof(StreamReader),
+            typeof(GZipStream),
+            typeof(DecompressionMethods),
+
             // webingest domain
             typeof(IngestWebClient),
             typeof(ScrapingHelpers),
@@ -69,7 +75,8 @@ namespace WebIngest.Core.Scripting
             
             // 3rd party libs
             typeof(SitemapQuery),
-            typeof(SitemapEntry)
+            typeof(SitemapEntry),
+            typeof(XmlSitemapParser)
         };
 
         public ScriptCompiler(string scriptSource)

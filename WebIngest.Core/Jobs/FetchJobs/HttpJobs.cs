@@ -41,7 +41,7 @@ namespace WebIngest.Core.Jobs.FetchJobs
         public static string FetchHttp(string dataSourceName, string url, OriginTypeConfiguration originConfig)
         {
 
-            IWebIngestWebClient client = originConfig.HttpConfiguration.UseSeleniumDriver
+            IWebIngestWebClient client = originConfig.HttpConfiguration.SeleniumConfiguration?.UseSeleniumDriver == true
                 ? new SeleniumWebClient(originConfig.HttpConfiguration)
                 : new IngestWebClient(originConfig.HttpConfiguration);
 
