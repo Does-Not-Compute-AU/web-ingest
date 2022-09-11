@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using WebIngest.Common.Extensions;
 using WebIngest.Common.Models;
 
 namespace WebIngest.Core.Extraction
@@ -8,11 +9,7 @@ namespace WebIngest.Core.Extraction
     {
         public static object ParseValue(Mapping mapping, PropertyMapping propMapping, string value)
         {
-            if (!string.IsNullOrEmpty(propMapping.RegexTransform?.FindPattern))
-                value = propMapping.RegexTransform.DoRegexReplace(value);
-            else if (!string.IsNullOrEmpty(propMapping.RegexTransform?.MatchPattern))
-                value = propMapping.RegexTransform.DoRegexMatch(value);
-
+            value = propMapping.RegexTransform?.DoTransform(value);
             var propType = mapping.DataType.PropertyTypeOf(propMapping.DataTypeProperty);
             object result = ParsePropertyType(propType, value);
 
@@ -23,13 +20,19 @@ namespace WebIngest.Core.Extraction
         {
             return property switch
             {
-                PropertyType.TEXT => value,
-                PropertyType.LONGTEXT => value,
+                PropertyType.TEXT => ParseString(value),
+                PropertyType.LONGTEXT => ParseString(value),
                 PropertyType.NUMBER => ParseDecimal(value),
                 PropertyType.MONEY => ParseDecimal(value),
                 _ => throw new NotSupportedException()
             };
         }
+
+        private static string ParseString(string value)
+        {
+            return value.Trim().NullIfEmpty();
+        }
+        
 
         private static decimal ParseDecimal(string value)
         {

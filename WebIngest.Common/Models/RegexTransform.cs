@@ -6,6 +6,14 @@ namespace WebIngest.Common.Models
 {
     public class RegexTransform
     {
+        public string DoTransform(string input)
+        {
+            if (!string.IsNullOrEmpty(FindPattern))
+                input = DoRegexReplace(input);
+            if (!string.IsNullOrEmpty(MatchPattern))
+                input = DoRegexMatch(input);
+            return input;
+        }
         /// <summary>
         /// Regex find selector
         /// </summary>
@@ -16,7 +24,7 @@ namespace WebIngest.Common.Models
         /// </summary>
         public string ReplacePattern { get; set; } = string.Empty;
 
-        public string DoRegexReplace(string input)
+        private string DoRegexReplace(string input)
         {
             return Regex.Replace(input, FindPattern, ReplacePattern);
         }
@@ -31,12 +39,16 @@ namespace WebIngest.Common.Models
         /// </summary>
         public string MatchResultSeparator { get; set; } = string.Empty;
 
-        public string DoRegexMatch(string input)
+        private string DoRegexMatch(string input)
         {
             return string.IsNullOrEmpty(input)
                 ? null
                 : Regex.Matches(input, MatchPattern)
-                    .Select(x => x.Value)
+                    .Select(x => x
+                        .Groups
+                        .Values
+                        .Last()
+                    )
                     .StringJoin(MatchResultSeparator);
         }
     }

@@ -82,10 +82,50 @@ services:
   rotatingproxy:
     image: mattes/rotating-proxy
     ports:
-      - 4444:4444
+      - 4440:4444
       - 5566:5566
     environment:
       tors: 50
+      
+  # SELENIUM!@?
+  chrome:
+    image: selenium/node-chrome:4.4.0-20220831
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+#  edge:
+#    image: selenium/node-edge:4.4.0-20220831
+#    shm_size: 2gb
+#    depends_on:
+#      - selenium-hub
+#    environment:
+#      - SE_EVENT_BUS_HOST=selenium-hub
+#      - SE_EVENT_BUS_PUBLISH_PORT=4442
+#      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-firefox:
+    image: selenium/node-firefox:4.4.0-20220831
+    shm_size: 8gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_NODE_MAX_SESSIONS=16
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-hub:
+    image: selenium/hub:4.4.0-20220831
+    container_name: selenium-hub
+    ports:
+      - 4442:4442
+      - 4443:4443
+      - ${SELENIUM_GRID_PORT}:4444
       
   # OPTIONAL - PostgresQL GraphQL / API Builder
   #hasura:

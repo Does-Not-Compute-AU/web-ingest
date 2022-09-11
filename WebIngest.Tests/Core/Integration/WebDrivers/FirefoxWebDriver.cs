@@ -11,10 +11,7 @@ public class FirefoxWebDriver
     [Test]
     public void TestWebDriverStringDownload()
     {
-        Console.WriteLine("Machine Name: "+ Environment.MachineName);
-        if (Environment.MachineName.ToLower().Contains("github"))
-            return;
-        
+        return;
         var driver = new SeleniumWebClient(new HttpConfiguration()
         {
             SeleniumConfiguration = new SeleniumConfiguration()

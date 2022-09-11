@@ -19,7 +19,7 @@ namespace WebIngest.Core.Jobs
     public static class DataOriginJobs
     {
         private static IMemoryCache _cache;
-        private static IServiceScopeFactory _serviceScopeFactory;
+        public static IServiceScopeFactory _serviceScopeFactory;
 
         public static void SetServiceProvider(IServiceScopeFactory serviceScopeFactory)
         {

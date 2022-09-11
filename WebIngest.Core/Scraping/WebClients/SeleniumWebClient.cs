@@ -3,11 +3,15 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using Castle.Core.Internal;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
+using OpenQA.Selenium.Remote;
 using OpenQA.Selenium.Support.UI;
-using WebIngest.Common.Models;
+using WebIngest.Common;
 using WebIngest.Common.Models.OriginConfiguration.Types;
+using WebIngest.Core.Jobs;
 
 namespace WebIngest.Core.Scraping.WebClients;
 
@@ -30,11 +34,11 @@ public class SeleniumWebClient : IWebIngestWebClient
         {
             var timeout = TimeSpan.FromSeconds(_seleniumConfig.TimeoutSeconds);
             driver.Navigate().GoToUrl(url);
-            
+
             // manual thread-sleep-seconds-wait if configured
             if (_seleniumConfig.ThreadSleepSeconds > 0)
                 Thread.Sleep(TimeSpan.FromSeconds(_seleniumConfig.ThreadSleepSeconds));
-            
+
             // wait-for-element by css selector, if configured
             if (!_seleniumConfig.ElementWaitSelector.IsNullOrEmpty())
                 new WebDriverWait(driver, timeout)
@@ -44,7 +48,7 @@ public class SeleniumWebClient : IWebIngestWebClient
             if (!_seleniumConfig.WaitForPageContains.IsNullOrEmpty())
                 new WebDriverWait(driver, timeout)
                     .Until(d => d.PageSource.Contains(_seleniumConfig.WaitForPageContains));
-            
+
             // wait until page doesn't contain some text
             if (!_seleniumConfig.WaitForPageNotContains.IsNullOrEmpty())
                 new WebDriverWait(driver, timeout)
@@ -53,6 +57,7 @@ public class SeleniumWebClient : IWebIngestWebClient
             // always wait until page source has something in it
             new WebDriverWait(driver, timeout)
                 .Until(d => !d.PageSource.IsNullOrEmpty());
+
             html = driver.PageSource;
             driver.Quit();
         }
@@ -65,12 +70,15 @@ public class SeleniumWebClient : IWebIngestWebClient
         return html;
     }
 
-    public IWebDriver InitFirefoxWebDriver(bool headless = true)
+    private FirefoxDriverService GetLocalFirefoxBinaryService()
     {
         var buildOutputDirectory = Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location);
         var binariesFolder = Path.Combine(buildOutputDirectory.FullName, "Binaries");
-        FirefoxDriverService service = FirefoxDriverService.CreateDefaultService(binariesFolder, "geckodriver.exe");
+        return FirefoxDriverService.CreateDefaultService(binariesFolder, "geckodriver.exe");
+    }
 
+    public IWebDriver InitFirefoxWebDriver(bool headless = true)
+    {
         var fxProfile = new FirefoxProfile();
         if (_httpConfiguration.RandomUserAgents)
             fxProfile.SetPreference("general.useragent.override", WebIngestClientHelpers.GetRandomUserAgent());
@@ -81,8 +89,8 @@ public class SeleniumWebClient : IWebIngestWebClient
         {
             Profile = fxProfile,
             AcceptInsecureCertificates = true,
-        }; 
-        
+        };
+
         if (headless)
             fxOptions.AddArgument("--headless");
 
@@ -107,10 +115,24 @@ public class SeleniumWebClient : IWebIngestWebClient
         IWebDriver driver = null;
         try
         {
-            driver = new FirefoxDriver(service, fxOptions);
-            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+            if (_seleniumConfig.UseBinaryDriver)
+                driver = new FirefoxDriver(GetLocalFirefoxBinaryService(), fxOptions);
+            else
+            {
+                var configuration =
+                    DataOriginJobs
+                        ._serviceScopeFactory
+                        .CreateScope()
+                        .ServiceProvider
+                        .GetRequiredService<IConfiguration>();
+                var seleniumHost = configuration.GetSeleniumGridHost();
+                var seleniumPort = configuration.GetSeleniumGridPort();
+                driver = new RemoteWebDriver(new($"{seleniumHost}:{seleniumPort}"), fxOptions);
+            }
+
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(_seleniumConfig.TimeoutSeconds);
             driver.Manage().Window.Size = new Size(1920, 1400);
-            driver.Manage().Window.Minimize();
+            //driver.Manage().Window.Minimize();
         }
         catch
         {
@@ -120,7 +142,9 @@ public class SeleniumWebClient : IWebIngestWebClient
                 driver = null;
                 stale?.Quit();
             }
-            catch{}
+            catch
+            {
+            }
         }
 
         if (driver == null)

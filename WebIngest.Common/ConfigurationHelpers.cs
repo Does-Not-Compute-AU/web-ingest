@@ -123,5 +123,13 @@ namespace WebIngest.Common
         [EnvOptional]
         public static string[] GetElasticHosts(this IConfiguration configuration) =>
             configuration.GetVariable("ELASTIC_HOSTS").Split(",");
+
+        [EnvOptional]
+        public static string GetSeleniumGridHost(this IConfiguration configuration) =>
+            configuration.GetVariable("SELENIUM_GRID_HOST");
+
+        [EnvOptional]
+        public static string GetSeleniumGridPort(this IConfiguration configuration) =>
+            configuration.GetVariable("SELENIUM_GRID_PORT");
     }
 }
