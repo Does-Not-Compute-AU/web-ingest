@@ -5,7 +5,7 @@ services:
 # REQUIRED - PostgresQL Database for Configuration Storage, Optional Entity Storage (enable via env)
   pg:
     image: postgres
-    restart: always
+    restart: unless-stopped
     environment:
       TZ: ${TIMEZONE}
       POSTGRES_USER: ${PG_SU_UNAME}
