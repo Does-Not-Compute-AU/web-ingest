@@ -2,7 +2,9 @@
 @page "/home"
 @using WebIngest.WebUI.Services.Hubs
 @using WebIngest.Common.Models.Messaging
+@using WebIngest.Common.Extensions
 @inject SignalRService _signalRService
+@inject IJSRuntime _js
 
 <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">Web Ingest Home</MudText>
 
@@ -13,7 +15,8 @@
         {
             <MudItem xs="12" md="6">
                 <MudCard>
-                    <MudCardContent><MudGrid>
+                    <MudCardContent>
+                        <MudGrid>
                             <MudItem xs="6" md="6" lg="3">
                                 <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@statistics.OriginName</MudText>
                             </MudItem>
@@ -29,10 +32,39 @@
             </MudItem>
         }
     }
+    <MudSpacer/>
+    <MudSpacer/>
+    <MudItem xs="12">
+        <HighChart Json="@chartJson"/>
+    </MudItem>
 </MudGrid>
 
 @code {
     private HomePageViewModel _viewModel;
+
+        private const string chartJson = @"{
+            chart: {
+                type: 'bar'
+            },
+            title: {
+                text: 'Fruit Consumption'
+            },
+            xAxis: {
+                categories: ['Apples', 'Bananas', 'Oranges']
+            },
+            yAxis: {
+                title: {
+                    text: 'Fruit eaten'
+                }
+            },
+            series: [{
+                name: 'Jane',
+                data: [1, 0, 4]
+            }, {
+                name: 'John',
+                data: [5, 7, 3]
+            }]
+        }";
 
     protected override void OnInitialized()
     {
@@ -45,5 +77,6 @@
         if (_viewModel == null)
             _signalRService.RefreshHomePageStats();
     }
+
 
 }
