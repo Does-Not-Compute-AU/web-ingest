@@ -1,7 +1,9 @@
 @using WebIngest.Common.Models
 @using WebIngest.Common.Extensions
+@using WebIngest.Common.Models.OriginConfiguration
 @using WebIngest.WebUI.Services
 @inject EntityService _entityService
+@inject IDialogService _dialogService
 
 @if (_mapping == null || _dataOrigins == null || _dataTypes == null)
 {
@@ -113,7 +115,7 @@ else
     {
         if (value == null) return;
         _dataOriginId = value;
-        _mapping.DataOriginId = (int) value;
+        _mapping.DataOriginId = (int)value;
         _mapping.DataOrigin = _dataOrigins.First(x => x.Id == _dataOriginId);
     }
 
@@ -121,8 +123,23 @@ else
     {
         if (value == null) return;
         _dataTypeId = value;
-        _mapping.DataTypeId = (int) value;
+        _mapping.DataTypeId = (int)value;
         _mapping.DataType = _dataTypes.First(x => x.Id == _dataTypeId);
+    }
+
+    public async Task<DialogResult> TestMappingDialog()
+    {
+        var dialog = _dialogService.Show<MappingTestDialog>(
+            "Test Mapping",
+            new DialogParameters()
+            {
+            },
+            new DialogOptions()
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium
+            });
+        return await dialog.Result;
     }
 
 }

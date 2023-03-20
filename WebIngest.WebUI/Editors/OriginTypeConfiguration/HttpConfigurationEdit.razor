@@ -4,9 +4,15 @@
 <MudGrid>
     @* CheckBoxes *@
     <MudItem xs="12" md="6">
-        <MudCheckBox @bind-Checked="@_httpConfiguration.ShuffleUrls">Shuffle Urls</MudCheckBox>
-        <MudCheckBox @bind-Checked="@_httpConfiguration.ProxyRequests">Proxy Requests</MudCheckBox>
-        <MudCheckBox @bind-Checked="@_httpConfiguration.RandomUserAgents">Random Device Type</MudCheckBox>
+        <MudItem>
+            <MudCheckBox @bind-Checked="@_httpConfiguration.ShuffleUrls">Shuffle Urls</MudCheckBox>
+        </MudItem>
+        <MudItem>
+            <MudCheckBox @bind-Checked="@_httpConfiguration.ProxyRequests">Proxy Requests</MudCheckBox>
+        </MudItem>
+        <MudItem>
+            <MudCheckBox @bind-Checked="@_httpConfiguration.RandomUserAgents">Random Device Type</MudCheckBox>
+        </MudItem>
     </MudItem>
 
     @* WebProxy Edit *@
@@ -62,9 +68,15 @@
         }
     }
 
+    <MudDivider Class="mt-6"/>
+    <MudItem xs="12">
+
+    </MudItem>
 </MudGrid>
 <div class="d-flex flex-row">
-    <MudFab OnClick="@(_ => AddUrl())" Color="Color.Secondary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" IconSize="Size.Medium" Class="ml-auto"/>
+    <MudTooltip Text="Add Origin Url" Class="ma-2 ml-auto">
+        <MudFab OnClick="@(_ => AddUrl())" Color="Color.Secondary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" IconSize="Size.Medium"/>
+    </MudTooltip>
 </div>
 
 @code {
@@ -86,6 +98,14 @@
 
     [Parameter]
     public EventCallback<HttpConfiguration> HttpConfigurationChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+        {
+            if (!_httpConfiguration.Urls.Any())
+                AddUrl();
+        }
+    }
 
     private void AddUrl()
     {

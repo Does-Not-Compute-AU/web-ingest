@@ -191,12 +191,12 @@ else
 
     private async void ApplyTemplateFile()
     {
-        var dialog = _dialogService.Show<DeleteDialog>(
+        var dialog = _dialogService.Show<SimpleActionDialog>(
             "Overwrite",
             new DialogParameters()
             {
                 {"ContentText", $"Are you sure you want to overwrite the structure of this datatype?"},
-                {"ButtonText", "Confirm"},
+                {"ActionButtonText", "Confirm"},
                 {"Color", Color.Primary}
             },
             new DialogOptions
@@ -226,7 +226,7 @@ else
 
     private async void ImportTemplateFile()
     {
-        var dialog = _dialogService.Show<DeleteDialog>(
+        var dialog = _dialogService.Show<SimpleActionDialog>(
             "Import Data",
             new DialogParameters()
             {
@@ -235,7 +235,7 @@ else
                                    $"Only data that matches properties of the datatype will be imported for each row. " +
                                    $"Superfluous data which does not match structure will be ignore."
                 },
-                {"ButtonText", "Confirm"},
+                {"ActionButtonText", "Confirm"},
                 {"Color", Color.Primary}
             },
             new DialogOptions

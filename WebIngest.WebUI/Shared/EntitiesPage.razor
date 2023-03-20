@@ -4,6 +4,9 @@
 @using WebIngest.WebUI.Services
 @using WebIngest.Common.Extensions
 @using Newtonsoft.Json.Linq
+@using WebIngest.Common.Models.OriginConfiguration
+@using System.Web
+@using System.Text
 @inject ISnackbar _snackbar
 @inject EntityService _entityService
 @inject IDialogService _dialogService
@@ -40,22 +43,29 @@
             {
                 if (EntityType == typeof(DataType))
                 {
-                    <DataTypeEdit DataType="@((DataType) _editEntity)"/>
+                    <DataTypeEdit DataType="@((DataType)_editEntity)"/>
                 }
 
                 if (EntityType == typeof(DataOrigin))
                 {
-                    <DataOriginEdit DataOrigin="@((DataOrigin) _editEntity)"/>
+                    <DataOriginEdit DataOrigin="@((DataOrigin)_editEntity)"/>
                 }
 
                 if (EntityType == typeof(Mapping))
                 {
-                    <MappingEdit Mapping="@((Mapping) _editEntity)"/>
+                    <MappingEdit Mapping="@((Mapping)_editEntity)" @ref="_refMappingEdit"/>
                 }
 
                 <div class="d-flex flex-row">
-                    <MudFab OnClick="@SaveEntity" Color="Color.Tertiary" Icon="@Icons.Material.Filled.Save" Size="Size.Large" IconSize="Size.Medium" Class="ma-2"></MudFab>
-                    <MudFab OnClick="@ConfirmDeleteEntity" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Large" IconSize="Size.Medium" Class="ma-2"></MudFab>
+                    <MudTooltip Text="Save">
+                        <MudFab OnClick="@SaveEntity" Color="Color.Tertiary" Icon="@Icons.Material.Filled.Save" Size="Size.Large" IconSize="Size.Medium" Class="ma-2 ml-auto"></MudFab>
+                    </MudTooltip>
+                    <MudTooltip Text="Test">
+                        <MudFab OnClick="@TestEntity" Color="Color.Primary" Icon="@Icons.Material.Filled.Bolt" Size="Size.Large" IconSize="Size.Medium" Class="ma-2 ml-auto"></MudFab>
+                    </MudTooltip>
+                    <MudTooltip Text="Delete">
+                        <MudFab OnClick="@ConfirmDeleteEntity" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Large" IconSize="Size.Medium" Class="ma-2 ml-auto"></MudFab>
+                    </MudTooltip>
                 </div>
             }
         </MudPaper>
@@ -63,12 +73,14 @@
 </MudGrid>
 
 @code {
+    private MappingEdit _refMappingEdit;
+
     private INamedEntity[] _entities;
     private INamedEntity _editEntity;
 
     [Parameter]
     public Type EntityType { get; set; }
-    
+
     [Parameter]
     public INamedEntity PresetEditEntity { get; set; }
 
@@ -79,7 +91,7 @@
 
         if (EntityType == typeof(DataOrigin))
             return new DataOrigin();
-        
+
         if (EntityType == typeof(Mapping))
             return new Mapping();
 
@@ -108,6 +120,85 @@
     {
         _editEntity = entity;
         StateHasChanged();
+    }
+
+    private async void TestEntity()
+    {
+        if (EntityType == typeof(Mapping))
+        {
+            var dialogResult = await _refMappingEdit.TestMappingDialog();
+            if (!dialogResult.Cancelled)
+            {
+                var mapping = _editEntity as Mapping;
+                var inputModel = dialogResult.Data as MappingTestInputModel;
+                inputModel.Mapping = mapping;
+
+                var response = await _entityService.TestMapping(inputModel);
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var parsedObjects = responseContent.FromJson<IList<IDictionary<string, string>>>();
+                    var htmlString = new StringBuilder();
+                    
+                    foreach (var obj in parsedObjects)
+                    {
+                        htmlString.AppendLine("<br/>");
+                        htmlString.AppendLine("<table>");
+                        foreach (var key in obj.Keys)
+                        {
+                            htmlString.AppendLine("<tr>");
+                            htmlString.AppendLine($"<th>{key}</th><td>{obj[key]}</td>");
+                            htmlString.AppendLine("</tr>");
+                        }
+                        htmlString.AppendLine("</table>");
+                    }
+
+
+                    _dialogService.Show<SimpleActionDialog>(
+                        "Extracted Results",
+                        new DialogParameters()
+                        {
+                            { "ContentText", "Process completed succesfully, extracted results were as follows:" },
+                            { "ContentRawHtml", htmlString.ToString() },
+                            { "CancelButtonText", "Close" }
+                        }
+                        ,
+                        new DialogOptions()
+                        {
+                            CloseButton = true,
+                            MaxWidth = MaxWidth.Medium
+                        })
+                        ;
+                }
+                else
+                {
+                    var errors = response.GetErrorMessages();
+                    if (errors.Any())
+                        foreach (var error in errors)
+                            _snackbar.Add(error, Severity.Error);
+                    else
+                        _snackbar.Add($"Save Failed with Reason: {response.ReasonPhrase}", Severity.Error);
+                }
+            }
+        }
+        if (EntityType == typeof(DataOrigin))
+        {
+            var response = await _entityService.TestDataOrigin(_editEntity as DataOrigin);
+            if (response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                _snackbar.Add(responseBody, Severity.Success);
+            }
+            else
+            {
+                var errors = response.GetErrorMessages();
+                if (errors.Any())
+                    foreach (var error in errors)
+                        _snackbar.Add(error, Severity.Error);
+                else
+                    _snackbar.Add($"Save Failed with Reason: {response.ReasonPhrase}", Severity.Error);
+            }
+        }
     }
 
     private async void SaveEntity()
@@ -146,11 +237,11 @@
     {
         var parameters = new DialogParameters();
         parameters.Add("ContentText", $"Do you really want to delete this {GetEntityTypeName()}? This process cannot be undone.");
-        parameters.Add("ButtonText", "Delete");
+        parameters.Add("ActionButtonText", "Delete");
         parameters.Add("Color", Color.Error);
 
-        var options = new DialogOptions {CloseButton = true, MaxWidth = MaxWidth.ExtraSmall};
-        var dialog = _dialogService.Show<DeleteDialog>("Delete", parameters, options);
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = _dialogService.Show<SimpleActionDialog>("Delete", parameters, options);
         var result = await dialog.Result;
         if (!result.Cancelled)
         {

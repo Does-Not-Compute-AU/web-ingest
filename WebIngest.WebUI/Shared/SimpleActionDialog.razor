@@ -1,0 +1,42 @@
+﻿@namespace WebIngest.WebUI.Shared
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer>
+            <MudText>@ContentText</MudText>
+            @((MarkupString)ContentRawHtml)
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@(CancelButtonText ?? "Cancel")</MudButton>
+        @if (!String.IsNullOrEmpty(ActionButtonText))
+        {
+            <MudButton Color="@Color" Variant="Variant.Filled" OnClick="Action">@ActionButtonText</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string ContentText { get; set; }
+
+    [Parameter]
+    public string ContentRawHtml { get; set; }
+
+    [Parameter]
+    public string ActionButtonText { get; set; }
+
+    [Parameter]
+    public string CancelButtonText { get; set; }
+
+    [Parameter]
+    public Color Color { get; set; }
+
+    void Action() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

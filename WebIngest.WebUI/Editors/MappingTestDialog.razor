@@ -1,0 +1,38 @@
+﻿@using WebIngest.Common.Models.OriginConfiguration
+
+
+<MudDialog>
+    <DialogContent>
+        <MudText>
+            @*If you wish to specify an example source file content manually, please fill it in the input box below.
+            <br>
+            If no example content is provided, WebIngest will try to source one based on the DataOrigin configuration.
+            <br/>
+            <strong>It is STRONGLY recommended to provide a sample content.</strong>*@
+            <strong>
+                Please provide an example source content to test against.
+                <br/>Automatic derivation of test content is not yet supported
+            </strong>
+        </MudText>
+        <MudTextField T="string" Lines="5" Variant="Variant.Filled" @bind-Value="_textInput"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Test">Test</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    private string _textInput;
+
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    void Test() => MudDialog.Close(DialogResult.Ok(new MappingTestInputModel
+    {
+        ExampleSourceContent = _textInput
+    }));
+
+    void Cancel() => MudDialog.Cancel();
+}

@@ -157,7 +157,7 @@ namespace WebIngest.WebAPI.BackgroundServices
                 .GetRequiredService<ConfigurationContext>();
             var origin = ctx.DataOrigins.First(x => x.Name == originName);
 
-            foreach (var job in DataOriginJobs.GetJobsForSource(origin))
+            foreach (var job in DataOriginJobs.GetJobsForOrigin(origin))
                 HangfireExtensions.EnqueueBackgroundJob(origin.GetBackgroundServerMutex(), job);
         }
     }

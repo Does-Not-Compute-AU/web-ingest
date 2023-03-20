@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebIngest.Common;
 using WebIngest.Common.Models;
 using WebIngest.Core.Data;
+using WebIngest.Core.Jobs;
 using WebIngest.WebAPI.BackgroundServices;
 
 namespace WebIngest.WebAPI.Controllers
@@ -44,7 +45,7 @@ namespace WebIngest.WebAPI.Controllers
             var item = _context.DataOrigins.Find(id);
             if (item == null)
                 return NotFound();
-            
+
             return Ok(item);
         }
 
@@ -65,10 +66,31 @@ namespace WebIngest.WebAPI.Controllers
                     HangfireTasks.EnqueueBackgroundJobServerRefresh();
                     return Ok();
                 }
+
                 return StatusCode(500);
             }
 
             return BadRequest();
+        }
+
+        // POST api/dataorigin/test
+        [HttpPost]
+        [Route("test")]
+        public IActionResult Test([FromBody] DataOrigin value)
+        {
+            if (TryValidateModel(value))
+            {
+                try
+                {
+                    var jobs = DataOriginJobs.GetJobsForOrigin(value);
+                    return Ok($"Configuration yielded {jobs.Count()} background jobs for processing");
+                }
+                catch (Exception e)
+                {
+                    return BadRequest($"Job enumeration threw error: {e.Message}");
+                }
+            }
+            return BadRequest(ModelState);
         }
 
         // PUT api/dataorigin/5
@@ -89,18 +111,19 @@ namespace WebIngest.WebAPI.Controllers
                     HangfireTasks.EnqueueBackgroundJobServerRefresh();
                     return Ok();
                 }
+
                 return StatusCode(500);
             }
 
             return BadRequest();
         }
-        
+
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
             if (id == 1)
                 return BadRequest("Cannot Modify Default Origin");
-            
+
             try
             {
                 DataOrigin dataOrigin = _context.DataOrigins.Find(id);
@@ -111,13 +134,13 @@ namespace WebIngest.WebAPI.Controllers
                 {
                     return Ok();
                 }
+
                 return StatusCode(500);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return BadRequest();
             }
         }
     }
 }
-

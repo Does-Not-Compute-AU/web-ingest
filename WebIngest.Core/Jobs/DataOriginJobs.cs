@@ -27,7 +27,7 @@ namespace WebIngest.Core.Jobs
             _cache = _serviceScopeFactory.CreateScope().ServiceProvider.GetService<IMemoryCache>();
         }
 
-        public static IEnumerable<Expression<Action>> GetJobsForSource(DataOrigin origin) =>
+        public static IEnumerable<Expression<Action>> GetJobsForOrigin(DataOrigin origin) =>
             GetJobsForType(
                 origin.OriginType,
                 origin.OriginTypeConfiguration,

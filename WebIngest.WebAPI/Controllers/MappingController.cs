@@ -1,12 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Castle.Core.Internal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebIngest.Common;
+using WebIngest.Common.Extensions;
 using WebIngest.Common.Models;
+using WebIngest.Common.Models.OriginConfiguration;
 using WebIngest.Core.Data;
+using WebIngest.Core.Extraction;
+using WebIngest.Core.Jobs;
 
 namespace WebIngest.WebAPI.Controllers
 {
@@ -68,6 +73,49 @@ namespace WebIngest.WebAPI.Controllers
             return BadRequest();
         }
 
+        // POST api/dataorigin/test
+        [HttpPost]
+        [Route("test")]
+        public IActionResult Test([FromBody] MappingTestInputModel input)
+        {
+            try
+            {
+                var mapping = input.Mapping;
+                var sourceContent = input.ExampleSourceContent;
+                if (TryValidateModel(mapping))
+                {
+                    if (sourceContent.IsNullOrEmpty())
+                    {
+                        return BadRequest("Automatic derivation of test content is not yet supported");
+                    }
+
+                    var dataOrigin = _context.DataOrigins.Find(mapping.DataOrigin.Id);
+                    if (dataOrigin.ContentType == ContentType.HTML)
+                    {
+                        var res = HtmlExtractor.ValuesFromHtml(mapping,
+                            dataOrigin.ContentTypeConfiguration,
+                            dataOrigin.OriginTypeConfiguration,
+                            sourceContent
+                        );
+                        
+                        return Ok(res);
+                    }
+                    else
+                    {
+                        return BadRequest(
+                            "Live-test not supported for this content type yet, please submit a request!");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+
+
+            return BadRequest();
+        }
+
         // PUT api/mapping/5
         [HttpPut("{id}")]
         public IActionResult Put(int id, [FromBody] Mapping value)
@@ -94,11 +142,11 @@ namespace WebIngest.WebAPI.Controllers
             try
             {
                 Mapping mapping = _context.Mappings.Find(id);
-                
+
                 // dont allow deletion of default mappings
                 if (mapping.DataOriginName == GlobalConstants.DefaultOriginName)
                     return BadRequest();
-                
+
                 _context.Mappings.Attach(mapping);
                 _context.Mappings.Remove(mapping);
 
