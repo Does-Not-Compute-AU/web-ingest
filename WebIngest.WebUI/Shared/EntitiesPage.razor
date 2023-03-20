@@ -10,6 +10,7 @@
 @inject ISnackbar _snackbar
 @inject EntityService _entityService
 @inject IDialogService _dialogService
+@inject IJSRuntime _jsRuntime
 
 <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-4">@GetEntityTypeName()</MudText>
 <MudGrid>
@@ -138,8 +139,12 @@
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var parsedObjects = responseContent.FromJson<IList<IDictionary<string, string>>>();
-                    var htmlString = new StringBuilder();
                     
+                    Console.Clear();
+                    Console.WriteLine("PARSED TEST RESULTS");
+                    await _jsRuntime.InvokeVoidAsync("console.log", parsedObjects);
+                    
+                    var htmlString = new StringBuilder();
                     foreach (var obj in parsedObjects)
                     {
                         htmlString.AppendLine("<br/>");
@@ -152,8 +157,7 @@
                         }
                         htmlString.AppendLine("</table>");
                     }
-
-
+                    
                     _dialogService.Show<SimpleActionDialog>(
                         "Extracted Results",
                         new DialogParameters()

@@ -33,7 +33,8 @@ namespace WebIngest.Core.Extraction
                         x.Attributes["value"]?.Value.NullIfEmpty() 
                         ?? x.TextContent.Trim().NullIfEmpty() 
                         ?? x.Attributes["content"]?.Value.NullIfEmpty() 
-                        ?? x.InnerHtml 
+                        ?? x.InnerHtml.NullIfEmpty()
+                        ?? x.OuterHtml.NullIfEmpty()
                     )
                     .ToList(); // add them to the values list
 
