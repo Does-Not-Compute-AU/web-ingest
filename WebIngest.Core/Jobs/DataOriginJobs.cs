@@ -76,7 +76,7 @@ namespace WebIngest.Core.Jobs
                     return ctx
                         .DataOrigins
                         .Include(o => o.Mappings)
-                        .ThenInclude(m => m.DataType)
+                        .ThenInclude(m => m.DataType) 
                         .First(ds => ds.Name == sourceName);
                 });
                 

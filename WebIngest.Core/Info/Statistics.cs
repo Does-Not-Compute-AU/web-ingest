@@ -37,7 +37,7 @@ namespace WebIngest.Core.Info
             var res =
                 new HomePageViewModel()
                 {
-                    OriginStatistics = ctx.DataOrigins.Select(GetStatistics)
+                    OriginStatistics = ctx.DataOrigins.Select(GetStatistics).ToList()
                 };
             return res;
         }
