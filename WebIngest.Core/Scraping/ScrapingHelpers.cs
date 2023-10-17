@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using TurnerSoftware.SitemapTools;
 using WebIngest.Core.Scraping.WebClients;
@@ -14,50 +16,74 @@ namespace WebIngest.Core.Scraping
         public static async Task<IEnumerable<string>> GetUrlPathsFromSitemaps(string url, WebProxy proxy = null)
         {
             var baseUri = new Uri(url);
-            var httpClientHandler = new HttpClientHandler
-            {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                Proxy = proxy
-            };
-            var httpClient = new HttpClient(handler: httpClientHandler, disposeHandler: true)
-            {
-                DefaultRequestHeaders =
-                {
-                    { "user-agent", WebIngestClientHelpers.GetRandomUserAgent() },
-                    { "origin", baseUri.GetLeftPart(UriPartial.Authority) },
-                    { "host", baseUri.Host },
-                    { "accept", "application/xml" }
-                }
-            };
-            var sitemapQuery = new SitemapQuery(httpClient);
             IEnumerable<SitemapFile> queryRes = Enumerable.Empty<SitemapFile>();
+            IList<Exception> exceptions = new List<Exception>();
+
+            // try first with decompression, collect error for rethrow
             try
             {
-                queryRes = await sitemapQuery.GetAllSitemapsForDomainAsync(baseUri.Host);
+                queryRes = await new SitemapQuery(
+                    new HttpClient(disposeHandler: true, handler: new HttpClientHandler
+                    {
+                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                        Proxy = proxy
+                    })
+                    {
+                        DefaultRequestHeaders = {
+                            { "user-agent", WebIngestClientHelpers.GetRandomUserAgent() },
+                            { "origin", baseUri.GetLeftPart(UriPartial.Authority) },
+                            { "user-agent", baseUri.Host },
+                            { "accept", "application/xml" }
+                        }
+                    }
+                ).GetAllSitemapsForDomainAsync(baseUri.Host);
             }
-            catch
+            catch(Exception e)
             {
-                // ignored
+                exceptions.Add(e);
             }
 
             var sitemapEntries = queryRes.ToList();
 
-            // if no sitemap entries found, try fetching robots.txt with added headers
+            // if no sitemap entries found yet, try without decompression but keeping headers
             if (!sitemapEntries.Any())
             {
-                sitemapQuery = new SitemapQuery(new HttpClient()
+                try
                 {
-                    DefaultRequestHeaders =
+                    queryRes = await new SitemapQuery(new HttpClient()
                     {
-                        { "user-agent", WebIngestClientHelpers.GetRandomUserAgent() },
-                        { "origin", baseUri.GetLeftPart(UriPartial.Authority) },
-                        { "user-agent", baseUri.Host },
-                        { "accept", "application/xml" }
-                    }
-                });
-                queryRes = await sitemapQuery.GetAllSitemapsForDomainAsync(baseUri.Host);
-                sitemapEntries = queryRes.ToList();
+                        DefaultRequestHeaders = {
+                            { "user-agent", WebIngestClientHelpers.GetRandomUserAgent() },
+                            { "origin", baseUri.GetLeftPart(UriPartial.Authority) },
+                            { "user-agent", baseUri.Host },
+                            { "accept", "application/xml" }
+                        }
+                    }).GetAllSitemapsForDomainAsync(baseUri.Host);
+                    sitemapEntries = queryRes.ToList();
+                }
+                catch (Exception e)
+                {
+                    exceptions.Add(e);
+                }
             }
+            
+            // if still no sitemap entries found, try without customised httpClient
+            if (!sitemapEntries.Any())
+            {
+                try
+                {
+                    queryRes = await new SitemapQuery().GetAllSitemapsForDomainAsync(baseUri.Host);
+                    sitemapEntries = queryRes.ToList();
+                }
+                catch (Exception e)
+                {
+                    exceptions.Add(e);
+                }
+            }
+            
+            // if no sitemaps found by now, but exceptions were thrown, throw them now
+            if(!sitemapEntries.Any() && exceptions.Any())
+                throw new AggregateException(exceptions);
 
             sitemapEntries = Enumerable.DistinctBy(sitemapEntries, x => x.Location).ToList();
             return sitemapEntries
