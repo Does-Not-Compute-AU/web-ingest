@@ -10,6 +10,7 @@ using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Remote;
 using OpenQA.Selenium.Support.UI;
 using WebIngest.Common;
+using WebIngest.Common.Extensions;
 using WebIngest.Common.Models.OriginConfiguration.Types;
 using WebIngest.Core.Jobs;
 

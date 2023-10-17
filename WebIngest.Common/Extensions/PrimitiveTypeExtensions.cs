@@ -17,7 +17,12 @@ namespace WebIngest.Common.Extensions
         {
             return checkfor.Any(check => @this.EndsWith(check));
         }
-
+        
+        public static bool IsNullOrEmpty(this string @this)
+        {
+            return String.IsNullOrEmpty(@this);
+        }
+        
         public static string RegexReplace(this string @this, string pattern, string replacement = "")
         {
             return Regex.Replace(@this, pattern, replacement);

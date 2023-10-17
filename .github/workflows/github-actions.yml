@@ -14,9 +14,10 @@ jobs:
         uses: actions/checkout@v2
       
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v2
         with:
-          dotnet-version: '6.0'
+          dotnet-version: '7.0.x'
+          include-prerelease: true
       
       - name: Install dependencies
         run: dotnet restore web-ingest.sln

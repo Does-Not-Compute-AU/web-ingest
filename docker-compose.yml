@@ -87,8 +87,8 @@ services:
     environment:
       tors: 50
       
-  # SELENIUM!@?
-  chrome:
+  # SELENIUM
+  selenium-chrome:
     image: selenium/node-chrome:4.4.0-20220831
     shm_size: 2gb
     depends_on:

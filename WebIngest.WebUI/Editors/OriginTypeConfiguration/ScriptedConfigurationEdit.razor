@@ -1,6 +1,8 @@
 ﻿@using WebIngest.Common.Models.OriginConfiguration
 @using WebIngest.Common.Models.OriginConfiguration.Types
 @using WebIngest.WebUI.Services
+@using BlazorMonaco.Editor
+@using Environment = System.Environment
 @inject ScriptingService _scriptingService
 @inject ISnackbar _snackbar
 
@@ -8,7 +10,7 @@
     <div class="mt-2 pa-2" style="height: 600px; width: 100%;">
         <MudButton Class="ma-2 ml-auto" Variant="Variant.Filled" Color="Color.Primary" OnClick="@TestScript">Test</MudButton>
         <MudDivider Class="mt-6"/>
-        <MonacoEditor Id="someID"
+        <StandaloneCodeEditor Id="someID"
                       CssClass="mud-height-full mud-width-full"
                       ConstructionOptions="@EditorConstructionOptions"
                       @ref="_editor"
@@ -18,7 +20,7 @@
 
 
 @code {
-    private MonacoEditor _editor;
+    private StandaloneCodeEditor _editor;
     private ScriptedConfiguration _scriptedConfiguration;
 
     [Parameter]
@@ -36,7 +38,7 @@
     [Parameter]
     public EventCallback<ScriptedConfiguration> ScriptedConfigurationChanged { get; set; }
 
-    private StandaloneEditorConstructionOptions EditorConstructionOptions(MonacoEditor editor)
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
     {
         return new()
         {
